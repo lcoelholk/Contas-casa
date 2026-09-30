@@ -43,7 +43,7 @@ Para conferir: em **Table Editor**, a tabela `contas` deve ter Lucas, Emillia e 
 - [x] Etapa 1: estrutura (Vite, React, TypeScript, Tailwind, Router, cliente Supabase)
 - [x] Etapa 2: banco de dados (estrutura, segurança, categorias, cadastro do casal)
 - [x] Etapa 3: login e navegação (login, abas vindas do banco, seletor de mês)
-- [ ] Etapa 4: lançamentos avulsos
+- [x] Etapa 4: lançamentos avulsos (pessoais, gastos divididos, marcar pago, editar, excluir)
 - [ ] Etapa 5: contas recorrentes
 - [ ] Etapa 6: compras parceladas
 - [ ] Etapa 7: resumo do mês
