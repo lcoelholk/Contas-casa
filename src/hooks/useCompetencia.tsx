@@ -8,6 +8,7 @@ type EstadoCompetencia = {
   anterior: () => void
   proximo: () => void
   irParaMesAtual: () => void
+  irPara: (c: Competencia) => void
 }
 
 const CompetenciaContext = createContext<EstadoCompetencia | null>(null)
@@ -23,6 +24,7 @@ export function CompetenciaProvider({ children }: { children: ReactNode }) {
     anterior: () => setCompetencia((c) => somarMeses(c, -1)),
     proximo: () => setCompetencia((c) => somarMeses(c, 1)),
     irParaMesAtual: () => setCompetencia(competenciaAtual()),
+    irPara: (c) => setCompetencia(c),
   }
 
   return <CompetenciaContext.Provider value={valor}>{children}</CompetenciaContext.Provider>

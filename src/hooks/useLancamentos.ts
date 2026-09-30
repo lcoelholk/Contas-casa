@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { db } from '../lib/supabase.ts'
 import { useAuth } from '../lib/auth.tsx'
-import { hoje, type Competencia } from '../lib/datas.ts'
+import { competenciaAtual, hoje, somarMeses, type Competencia } from '../lib/datas.ts'
 import { planejarEdicaoGrupo, type Partes } from '../lib/divisao.ts'
 import type { Categoria, Lancamento, TipoMovimento } from '../types/banco.ts'
 
@@ -26,6 +26,58 @@ export function useLancamentos(competencia: Competencia) {
         .order('criado_em')
       if (error) throw error
       return data as Lancamento[]
+    },
+  })
+}
+
+/**
+ * Gastos não pagos com vencimento até daqui a 7 dias, de qualquer mês
+ * (para "atrasados" e "vence nos próximos 7 dias" do Resumo).
+ * Antes, garante que o mês atual e o próximo já foram gerados.
+ */
+export function useAlertas() {
+  const { sessao } = useAuth()
+  const dataHoje = hoje()
+  return useQuery({
+    queryKey: [CHAVE, 'alertas', dataHoje],
+    enabled: Boolean(sessao),
+    queryFn: async (): Promise<Lancamento[]> => {
+      const cliente = db()
+      const atual = competenciaAtual()
+      for (const mes of [atual, somarMeses(atual, 1)]) {
+        const gerado = await cliente.rpc('gerar_competencia', { p_mes: mes })
+        if (gerado.error && !funcaoAusente(gerado.error)) throw gerado.error
+      }
+      const limite = new Date(`${dataHoje}T12:00:00Z`)
+      limite.setUTCDate(limite.getUTCDate() + 7)
+      const { data, error } = await cliente
+        .from('lancamentos')
+        .select('*')
+        .eq('pago', false)
+        .eq('tipo', 'saida')
+        .not('vencimento', 'is', null)
+        .lte('vencimento', limite.toISOString().slice(0, 10))
+        .order('vencimento')
+      if (error) throw error
+      return data as Lancamento[]
+    },
+  })
+}
+
+/** Marca como pago a partir de qualquer tela (atualiza todos os meses e o Resumo) */
+export function useMarcarPago() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, pago }: { id: string; pago: boolean }) => {
+      const { error } = await db()
+        .from('lancamentos')
+        .update({ pago, pago_em: pago ? hoje() : null })
+        .eq('id', id)
+      if (error) throw error
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: [CHAVE] })
+      queryClient.invalidateQueries({ queryKey: ['compras'] })
     },
   })
 }
@@ -241,7 +293,7 @@ export function useAlternarPago(competencia: Competencia) {
       if (contexto?.anterior) queryClient.setQueryData(chave, contexto.anterior)
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: chave })
+      queryClient.invalidateQueries({ queryKey: [CHAVE] }) // o mês e os alertas do Resumo
       queryClient.invalidateQueries({ queryKey: ['compras'] }) // progresso das parcelas
     },
   })

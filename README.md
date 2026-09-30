@@ -47,7 +47,7 @@ Para conferir: em **Table Editor**, a tabela `contas` deve ter Lucas, Emillia e 
 - [x] Etapa 4: lançamentos avulsos (pessoais, gastos divididos, marcar pago, editar, excluir)
 - [x] Etapa 5: contas fixas (aluguel, luz, salário; divisão com vigência; só este mês; encerrar)
 - [x] Etapa 6: compras parceladas (divisão mensal, progresso, editar, quitar com saldo, excluir)
-- [ ] Etapa 7: resumo do mês
+- [x] Etapa 7: resumo do mês (atrasados, próximos 7 dias, totais completos, gastos por categoria)
 - [ ] Etapa 8: contas dinâmicas e configurações
 - [ ] Etapa 9: tempo real e instalação no celular
 - [x] Etapa 10: publicação no GitHub Pages (https://lcoelholk.github.io/Contas-casa/)
