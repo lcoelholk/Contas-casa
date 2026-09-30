@@ -129,8 +129,9 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 /
 ├── CLAUDE.md                  ← este documento
 ├── supabase/
-│   ├── migrations/            ← SQL numerado (0001_schema.sql, 0002_rls.sql, ...)
-│   └── seed.sql               ← categorias padrão
+│   ├── migrations/            ← SQL numerado (0001_estrutura.sql, 0002_seguranca.sql, ...)
+│   ├── setup_casal.sql        ← cadastra Lucas, Emillia e as abas iniciais (rodar 1 vez)
+│   └── testes/                ← teste do banco em Postgres local (npm run test:banco)
 ├── src/
 │   ├── lib/
 │   │   ├── supabase.ts        ← cliente
@@ -298,20 +299,17 @@ Depois que Lucas e Emillia criarem as contas, **desativar novos cadastros** no S
 1. Criar conta no **GitHub** e um repositório `Contas-casa` (https://github.com/lcoelholk/Contas-casa).
 2. Criar conta no **Supabase** (dá para entrar com o GitHub) e um projeto novo, na região São Paulo se disponível.
 3. Rodar as migrations em `supabase/migrations/` no SQL Editor do Supabase, em ordem.
-4. Lucas e Emillia se cadastram pelo app. Depois, no SQL Editor:
-   ```sql
-   insert into membros (user_id, nome)
-   select id, 'Lucas' from auth.users where email = '<email do Lucas>';
-   insert into membros (user_id, nome)
-   select id, 'Emillia' from auth.users where email = '<email da Emillia>';
-   ```
-   Em seguida, rodar o seed das contas iniciais e desativar novos cadastros.
-5. **Variáveis de ambiente**
-   - Local: arquivo `.env.local` (já no `.gitignore`) com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`.
+4. Criar os dois usuários em **Authentication → Users → Add user → Create new user** (e-mail e senha, com "Auto Confirm User" marcado). O app não tem tela de cadastro: ninguém de fora consegue criar conta.
+5. Em **Authentication → Sign In / Providers**, desligar **"Allow new users to sign up"**.
+6. Editar os e-mails em `supabase/setup_casal.sql` e rodar no SQL Editor. Ele liga cada login a um membro e cria as abas Lucas, Emillia e Casa.
+7. **Variáveis de ambiente**
+   - Local: arquivo `.env.local` (já no `.gitignore`) com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`. A chave pode ser a `anon` (JWT) ou a nova `sb_publishable_...`.
    - Deploy: as mesmas duas como **Secrets** do repositório no GitHub.
-   - A chave `anon` pode ficar no front-end: quem protege os dados é o RLS. **Nunca** colocar a chave `service_role` no código nem no repositório.
-6. Ativar o **GitHub Pages** com origem "GitHub Actions". O workflow `deploy.yml` faz o build e publica a cada push na `main`. Configurar `base: '/Contas-casa/'` no `vite.config.ts`.
-7. No celular, abrir o link e escolher "Adicionar à tela inicial".
+   - A chave pública pode ficar no front-end: quem protege os dados é o RLS. **Nunca** colocar a chave `service_role` / `sb_secret_...` no código nem no repositório.
+8. Ativar o **GitHub Pages** com origem "GitHub Actions". O workflow `deploy.yml` faz o build e publica a cada push na `main`. Configurar `base: '/Contas-casa/'` no `vite.config.ts`.
+9. No celular, abrir o link e escolher "Adicionar à tela inicial".
+
+**Mudanças no banco:** toda migration nova deve passar em `npm run test:banco` (Postgres local simulando o Supabase) antes de ser aplicada no projeto real. Ao criar tabela nova, incluir a tabela no laço de RLS/grants (ver `0002_seguranca.sql`) e adicionar testes de acesso.
 
 ---
 
