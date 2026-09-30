@@ -76,6 +76,13 @@ export function agruparPorRecorrente<T extends Pick<Lancamento, 'id' | 'recorren
   return agruparPor(ls, (l) => l.recorrente_id ?? l.id)
 }
 
+/** Junta as partes de uma mesma parcela no mês (mesma compra e número de parcela) */
+export function agruparPorCompra<
+  T extends Pick<Lancamento, 'id' | 'compra_id' | 'parcela_numero' | 'valor_centavos'>,
+>(ls: T[]): Grupo<T>[] {
+  return agruparPor(ls, (l) => (l.compra_id ? `${l.compra_id}:${l.parcela_numero ?? 'q'}` : l.id))
+}
+
 function agruparPor<T extends Pick<Lancamento, 'valor_centavos'>>(ls: T[], chaveDe: (l: T) => string): Grupo<T>[] {
   const mapa = new Map<string, T[]>()
   for (const l of ls) {

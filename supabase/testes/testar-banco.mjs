@@ -235,8 +235,60 @@ await gerar('2027-09-01'); await gerar('2027-10-01')
 ok((await q(`select count(*)::int n from lancamentos where compra_id=$1 and competencia='2027-09-01' and parcela_numero=12`, [compra]))[0].n === 2, 'setembro/2027: parcela 12/12 para os dois')
 ok((await q(`select count(*)::int n from lancamentos where compra_id=$1 and competencia='2027-10-01'`, [compra]))[0].n === 0, 'outubro/2027: acabou, nada gerado')
 
+// =============================================================================
+// Etapa 6 · Compras parceladas (0005)
+// =============================================================================
+console.log('\n— Compras parceladas —')
+const partesDaCompra = async (compraId, mes) =>
+  Object.fromEntries(
+    (await q(
+      `select m.nome, l.valor_centavos v, l.descricao d from lancamentos l join membros m on m.id = l.membro_id
+       where l.compra_id = $1 and l.competencia = $2::date order by m.nome, l.descricao`,
+      [compraId, mes],
+    )).map((r) => [`${r.nome}:${r.d}`, r.v]),
+  )
+const sofa = (await q(
+  `select criar_compra($1, 'Sofá', null, 240000, 6, '2026-10-01', 15, $2::jsonb) id`, [idCasa, partes(20000, 20000)]))[0].id
+ok(Boolean(sofa), 'criou a compra Sofá R$ 2.400 em 6x (200 / 200)')
+await gerar('2026-10-01'); await gerar('2026-11-01'); await gerar('2026-12-01')
+ok(JSON.stringify(await partesDaCompra(sofa, '2026-11-01')) === '{"Emillia:Sofá (2/6)":20000,"Lucas:Sofá (2/6)":20000}', 'novembro: Sofá (2/6) para os dois')
+
+// Alterar a partir de dezembro: Emillia paga mais
+await q(`update lancamentos set pago = true where compra_id = $1 and competencia = '2026-10-01'`, [sofa])
+await q(`select alterar_compra($1, '2026-12-01', 'Sofá novo', null, 15, $2::jsonb)`, [sofa, partes(10000, 30000)])
+ok(JSON.stringify(await partesDaCompra(sofa, '2026-11-01')) === '{"Emillia:Sofá (2/6)":20000,"Lucas:Sofá (2/6)":20000}', 'alterar a partir de dezembro não muda novembro')
+ok(JSON.stringify(await partesDaCompra(sofa, '2026-12-01')) === '{"Emillia:Sofá novo (3/6)":30000,"Lucas:Sofá novo (3/6)":10000}', 'dezembro: Sofá novo (3/6) 100 / 300')
+await gerar('2027-01-01')
+ok(JSON.stringify(await partesDaCompra(sofa, '2027-01-01')) === '{"Emillia:Sofá novo (4/6)":30000,"Lucas:Sofá novo (4/6)":10000}', 'janeiro já nasce com os valores novos')
+
+// Quitar em janeiro (parcela 4 de 6), lançando o saldo: faltam 5 e 6
+await gerar('2027-02-01')
+await q(`update lancamentos set pago = true where compra_id = $1 and competencia = '2027-02-01' and membro_id = $2`, [sofa, lucas])
+await q(`select quitar_compra($1, '2027-01-01', true)`, [sofa])
+const jan = await partesDaCompra(sofa, '2027-01-01')
+ok(jan['Lucas:Sofá novo (quitação)'] === 10000 && jan['Emillia:Sofá novo (quitação)'] === 60000,
+  `quitação em janeiro: Lucas 100 (a parcela 5 já estava paga), Emillia 600 → ${JSON.stringify(jan)}`)
+ok(JSON.stringify(await partesDaCompra(sofa, '2027-02-01')) === '{"Lucas:Sofá novo (5/6)":10000}', 'fevereiro: só fica a parcela que já estava paga')
+await gerar('2027-03-01')
+ok(Object.keys(await partesDaCompra(sofa, '2027-03-01')).length === 0, 'depois de quitada, março não tem parcela do sofá')
+await deveFalhar(`select quitar_compra('${sofa}', '2027-01-01', true)`, 'não quita duas vezes')
+await deveFalhar(`select excluir_compra('${sofa}')`, 'não exclui compra com parcela paga')
+
+const tv = (await q(`select criar_compra($1, 'TV', null, 300000, 10, '2026-11-01', null, $2::jsonb) id`, [idCasa, partes(15000, 15000)]))[0].id
+await deveFalhar(`select quitar_compra('${tv}', '2026-10-01', false)`, 'não quita antes de a compra começar')
+await gerar('2026-11-01')
+await q(`select excluir_compra($1)`, [tv])
+ok((await q(`select count(*)::int n from lancamentos where compra_id = $1`, [tv]))[0].n === 0, 'exclui compra sem parcela paga (com as parcelas)')
+
+const celular = (await q(`select criar_compra($1, 'Celular', null, 120000, 10, '2026-10-01', 5, $2::jsonb) id`, [idContaLucas, JSON.stringify({ [lucas]: 12000 })]))[0].id
+await gerar('2026-10-01')
+ok((await q(`select descricao from lancamentos where compra_id = $1`, [celular]))[0]?.descricao === 'Celular (1/10)', 'compra parcelada pessoal (celular do Lucas)')
+await deveFalhar(`select criar_compra('${idContaLucas}', 'Errado', null, 100, 1, '2026-10-01', null, '${JSON.stringify({ [emillia]: 100 })}'::jsonb)`, 'compra na conta do Lucas com parte da Emillia é bloqueada')
+await deveFalhar(`select criar_compra('${idCasa}', 'Zero', null, 100, 2, '2026-10-01', null, '${partes(0, 0)}'::jsonb)`, 'compra sem valor por pessoa é bloqueada')
+
 // Quem não é membro não consegue nada
 await como('authenticated', 'estranho@teste.com')
+await deveFalhar(`select criar_compra('${idCasa}', 'Invasão', null, 100, 2, '2026-10-01', null, '${partes(50, 50)}'::jsonb)`, 'estranho não cria compra')
 ok((await gerar('2026-10-01')) === 0, 'estranho: gerar não cria nada')
 await deveFalhar(`select criar_recorrente('${idCasa}', 'saida', 'Invasão', null, 5, '2026-10-01', '${partes(1, 1)}'::jsonb)`, 'estranho não cria conta fixa')
 await como('anon', null)

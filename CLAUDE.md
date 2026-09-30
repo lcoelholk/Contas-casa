@@ -275,6 +275,15 @@ Todas `security invoker` (o RLS vale), executáveis só por `authenticated`:
 | `encerrar_recorrente(id, ultimo_mes)` | Regra 9 |
 | `excluir_recorrente(id)` | Regra 10 (recusa se houver mês pago) |
 
+Migration 0005 (compras parceladas), mesmas regras de segurança:
+
+| Função | O que faz |
+|---|---|
+| `criar_compra(conta, descricao, categoria, total, parcelas, primeira, dia, partes jsonb)` | Cria compra + valor mensal de cada um |
+| `alterar_compra(id, desde, descricao, categoria, dia, partes jsonb)` | Muda deste mês em diante (parcelas pagas não mudam). Total, nº de parcelas e 1º mês não mudam. |
+| `quitar_compra(id, mes, lancar_saldo)` | Regra 8. Com `lancar_saldo`, o que falta entra no mês como "<descrição> (quitação)" (`parcela_numero` nulo) |
+| `excluir_compra(id)` | Regra 10 |
+
 `partes` é `{"<membro_id>": centavos}`. Em conta pessoal, só o dono pode ter valor (validado).
 `recorrentes` tem a coluna `tipo` (`saida`/`entrada`), para gasto fixo ou entrada fixa (salário).
 

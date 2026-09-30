@@ -77,3 +77,29 @@ export type RecorrenteDivisao = {
   valor_centavos: number
   vigente_desde: string
 }
+
+export type CompraParcelada = {
+  id: string
+  conta_id: string
+  descricao: string
+  categoria_id: string | null
+  valor_total_centavos: number
+  num_parcelas: number
+  primeira_competencia: string
+  dia_vencimento: number | null
+  /** Mês em que foi quitada (null = segue normal) */
+  quitada_em: string | null
+}
+
+export type CompraDivisao = {
+  id: string
+  compra_id: string
+  membro_id: string
+  valor_mensal_centavos: number
+}
+
+/** Parcela já gerada (qualquer mês), para calcular o progresso */
+export type LinhaDeCompra = Pick<
+  Lancamento,
+  'id' | 'compra_id' | 'membro_id' | 'valor_centavos' | 'pago' | 'parcela_numero' | 'competencia'
+>

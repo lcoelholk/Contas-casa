@@ -240,6 +240,9 @@ export function useAlternarPago(competencia: Competencia) {
     onError: (_erro, _vars, contexto) => {
       if (contexto?.anterior) queryClient.setQueryData(chave, contexto.anterior)
     },
-    onSettled: () => queryClient.invalidateQueries({ queryKey: chave }),
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: chave })
+      queryClient.invalidateQueries({ queryKey: ['compras'] }) // progresso das parcelas
+    },
   })
 }
