@@ -16,6 +16,12 @@ export const supabase: SupabaseClient | null = supabaseConfigurado
     })
   : null
 
+/** Cliente do Supabase para uso nas telas (só depois de conferir `supabaseConfigurado`) */
+export function db(): SupabaseClient {
+  if (!supabase) throw new Error('Supabase não configurado: preencha o .env.local')
+  return supabase
+}
+
 export type StatusConexao =
   | { ok: true }
   | { ok: false; motivo: 'nao-configurado' | 'chave-invalida' | 'sem-resposta'; detalhe?: string }

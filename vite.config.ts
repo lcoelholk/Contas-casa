@@ -7,4 +7,8 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   base: '/Contas-casa/',
   plugins: [react(), tailwindcss()],
+  build: {
+    // ~150 kB compactado: aceitável para o app inteiro
+    chunkSizeWarningLimit: 800,
+  },
 })

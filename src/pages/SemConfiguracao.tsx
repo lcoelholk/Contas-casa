@@ -9,7 +9,7 @@ const ABAS = [
   { nome: 'Casa', cor: 'bg-marca-100 text-marca-900' },
 ]
 
-export default function Inicio() {
+export default function SemConfiguracao() {
   const conexao = useQuery({
     queryKey: ['conexao-supabase'],
     queryFn: verificarConexao,
@@ -23,8 +23,7 @@ export default function Inicio() {
         <p className="text-sm font-medium text-marca-700 first-letter:uppercase">{mes}</p>
         <h1 className="mt-1 text-3xl font-bold tracking-tight">Olá, Lucas e Emillia 👋</h1>
         <p className="mt-2 text-stone-600">
-          Este é o começo do app de contas da casa. Nas próximas etapas entram o login, as abas e os
-          lançamentos.
+          Falta ligar o app ao banco de dados. Siga o aviso abaixo e recarregue a página.
         </p>
       </header>
 
