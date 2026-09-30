@@ -56,3 +56,24 @@ export type Lancamento = {
   criado_por: string | null
   criado_em: string
 }
+
+export type Recorrente = {
+  id: string
+  conta_id: string
+  tipo: TipoMovimento
+  descricao: string
+  categoria_id: string | null
+  dia_vencimento: number | null
+  /** 1º dia do mês de início */
+  inicio: string
+  /** Último mês em que aparece (null = sem fim) */
+  fim: string | null
+}
+
+export type RecorrenteDivisao = {
+  id: string
+  recorrente_id: string
+  membro_id: string
+  valor_centavos: number
+  vigente_desde: string
+}

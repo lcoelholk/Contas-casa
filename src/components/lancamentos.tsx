@@ -50,14 +50,15 @@ function TextoVencimento({ l, hoje }: { l: Pick<Lancamento, 'tipo' | 'pago' | 'v
   return <span className={classe}>{texto}</span>
 }
 
+/** Linha de detalhes separados por " · ", que quebra como texto normal */
 function Detalhes({ partes }: { partes: React.ReactNode[] }) {
   const visiveis = partes.filter(Boolean)
   if (visiveis.length === 0) return null
   return (
-    <span className="flex flex-wrap items-center gap-x-1.5 text-xs text-stone-500">
+    <span className="text-xs text-stone-500">
       {visiveis.map((p, i) => (
-        <span key={i} className="flex items-center gap-1.5">
-          {i > 0 && <span aria-hidden>·</span>}
+        <span key={i}>
+          {i > 0 && <span aria-hidden> · </span>}
           {p}
         </span>
       ))}
@@ -122,6 +123,7 @@ export function ItemGrupo({
   hoje,
   onAlternarPago,
   onAbrir,
+  selo,
 }: {
   linhas: Lancamento[]
   total: number
@@ -130,6 +132,7 @@ export function ItemGrupo({
   hoje: DataISO
   onAlternarPago: (l: Lancamento) => void
   onAbrir: () => void
+  selo?: string
 }) {
   const base = linhas[0]
   const todosPagos = linhas.every((l) => l.pago)
@@ -141,6 +144,7 @@ export function ItemGrupo({
           <Detalhes
             partes={[
               categoria && `${categoria.icone ?? ''} ${categoria.nome}`.trim(),
+              selo,
               base.vencimento ? <TextoVencimento key="v" l={{ ...base, pago: todosPagos }} hoje={hoje} /> : null,
             ]}
           />

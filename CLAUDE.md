@@ -264,6 +264,23 @@ create index lanc_competencia on lancamentos (competencia);
 create index lanc_membro_comp on lancamentos (membro_id, competencia);
 ```
 
+### Funções do banco (migration 0004)
+Todas `security invoker` (o RLS vale), executáveis só por `authenticated`:
+
+| Função | O que faz |
+|---|---|
+| `gerar_competencia(p_mes)` | Gera o mês a partir de contas fixas e parcelas. Chamada pelo app antes de ler os lançamentos do mês. |
+| `criar_recorrente(conta, tipo, descricao, categoria, dia, inicio, partes jsonb)` | Cria conta fixa + divisão inicial |
+| `alterar_recorrente(id, desde, descricao, categoria, dia, partes jsonb)` | Muda deste mês em diante (regra 5) |
+| `encerrar_recorrente(id, ultimo_mes)` | Regra 9 |
+| `excluir_recorrente(id)` | Regra 10 (recusa se houver mês pago) |
+
+`partes` é `{"<membro_id>": centavos}`. Em conta pessoal, só o dono pode ter valor (validado).
+`recorrentes` tem a coluna `tipo` (`saida`/`entrada`), para gasto fixo ou entrada fixa (salário).
+
+**"Só este mês"** (ex.: luz veio diferente) é feito pelo app editando as linhas do mês com `editado_manualmente = true`.
+A geração **não** gera de novo um mês que já tem qualquer linha daquela conta fixa, então remover a parte de alguém só num mês é respeitado.
+
 ### Função de geração do mês
 `gerar_competencia(p_mes date)` em PL/pgSQL, chamada via `supabase.rpc('gerar_competencia', { p_mes })`:
 

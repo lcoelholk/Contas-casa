@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   atualizarParteLivre,
   detectarModo,
+  divisaoVigente,
   faltaDistribuir,
   partesIguais,
   partesPorModo,
@@ -92,5 +93,26 @@ describe('planejarEdicaoGrupo', () => {
   it('era tudo do Lucas e agora divide: insere a linha da Emillia', () => {
     const plano = planejarEdicaoGrupo([{ id: 'l1', membro_id: L }], { lucas: 15000, emillia: 15000 })
     expect(plano.inserir).toEqual([{ membro_id: E, valor: 15000 }])
+  })
+})
+
+describe('divisaoVigente', () => {
+  const divisoes = [
+    { recorrente_id: 'r', membro_id: L, valor_centavos: 120000, vigente_desde: '2026-10-01' },
+    { recorrente_id: 'r', membro_id: E, valor_centavos: 80000, vigente_desde: '2026-10-01' },
+    { recorrente_id: 'r', membro_id: L, valor_centavos: 100000, vigente_desde: '2026-11-01' },
+    { recorrente_id: 'r', membro_id: E, valor_centavos: 100000, vigente_desde: '2026-11-01' },
+    { recorrente_id: 'outra', membro_id: L, valor_centavos: 1, vigente_desde: '2026-01-01' },
+  ]
+
+  it('outubro usa a divisão de outubro', () => {
+    expect(divisaoVigente(divisoes, 'r', '2026-10-01')).toEqual({ lucas: 120000, emillia: 80000 })
+  })
+  it('novembro em diante usa a nova', () => {
+    expect(divisaoVigente(divisoes, 'r', '2026-11-01')).toEqual({ lucas: 100000, emillia: 100000 })
+    expect(divisaoVigente(divisoes, 'r', '2027-05-01')).toEqual({ lucas: 100000, emillia: 100000 })
+  })
+  it('antes do início: vazio', () => {
+    expect(divisaoVigente(divisoes, 'r', '2026-09-01')).toEqual({})
   })
 })

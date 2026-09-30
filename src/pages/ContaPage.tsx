@@ -5,7 +5,7 @@ import { useContas, useMembroAtual, useMembros } from '../hooks/useDados.ts'
 import { useAlternarPago, useCategorias, useLancamentos } from '../hooks/useLancamentos.ts'
 import { formatarCentavos, somar } from '../lib/dinheiro.ts'
 import { hoje, nomeDaCompetencia } from '../lib/datas.ts'
-import { agruparPorGrupo, calcularTotais, ordenarLancamentos } from '../lib/totais.ts'
+import { agruparPorGrupo, agruparPorRecorrente, calcularTotais, ordenarLancamentos } from '../lib/totais.ts'
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
 import {
   BotaoAdicionar,
@@ -16,6 +16,7 @@ import {
 } from '../components/lancamentos.tsx'
 import { FormLancamentoPessoal } from '../components/FormLancamentoPessoal.tsx'
 import { FormGastoCompartilhado } from '../components/FormGastoCompartilhado.tsx'
+import { FormRecorrente } from '../components/FormRecorrente.tsx'
 import type { Categoria, Conta, Lancamento, Membro } from '../types/banco.ts'
 
 /** Página de uma aba: pessoal (Lucas / Emillia) ou compartilhada (Casa...) */
@@ -79,11 +80,13 @@ function Secao({
   titulo,
   subtotal,
   vazio,
+  acao,
   children,
 }: {
   titulo: string
   subtotal?: number
   vazio: string
+  acao?: { texto: string; onClick: () => void }
   children?: ReactNode
 }) {
   const temConteudo = Array.isArray(children) ? children.length > 0 : Boolean(children)
@@ -100,16 +103,83 @@ function Secao({
       ) : (
         <p className="pt-3 pb-3 text-sm text-stone-500">{vazio}</p>
       )}
+      {acao && (
+        <button
+          type="button"
+          onClick={acao.onClick}
+          className="mb-3 flex h-10 w-full items-center justify-center rounded-xl border border-dashed border-stone-300 text-sm font-semibold text-marca-700 hover:bg-marca-50"
+        >
+          + {acao.texto}
+        </button>
+      )}
     </section>
   )
 }
 
 const categoriaDe = (categorias: Categoria[], id: string | null) => categorias.find((c) => c.id === id)
 
+/** Texto curto de origem para mostrar junto do lançamento */
+function seloDe(l: Lancamento, totalDoGrupo: number): string | undefined {
+  const partes: string[] = []
+  if (l.origem === 'recorrente') partes.push(l.editado_manualmente ? 'fixa · valor do mês' : 'todo mês')
+  if (totalDoGrupo > l.valor_centavos) partes.push(`parte de ${formatarCentavos(totalDoGrupo)}`)
+  return partes.length ? partes.join(' · ') : undefined
+}
+
 type Edicao =
   | { tipo: 'novo' }
   | { tipo: 'pessoal'; lancamento: Lancamento }
   | { tipo: 'compartilhado'; conta: Conta; grupo: Lancamento[] }
+  | { tipo: 'recorrente'; conta: Conta; recorrenteId?: string }
+
+/** Abre o formulário certo para um lançamento, conforme a origem dele */
+function edicaoPara(l: Lancamento, conta: Conta, todos: Lancamento[]): Edicao {
+  if (l.origem === 'recorrente' && l.recorrente_id) return { tipo: 'recorrente', conta, recorrenteId: l.recorrente_id }
+  if (conta.tipo === 'pessoal') return { tipo: 'pessoal', lancamento: l }
+  const grupo = l.grupo_id ? todos.filter((x) => x.grupo_id === l.grupo_id) : [l]
+  return { tipo: 'compartilhado', conta, grupo }
+}
+
+function Formularios({
+  edicao,
+  fechar,
+  membros,
+  criadoPor,
+}: {
+  edicao: Edicao | null
+  fechar: () => void
+  membros: Membro[]
+  criadoPor: string | undefined
+}) {
+  const { competencia } = useCompetencia()
+  if (!edicao) return null
+  if (edicao.tipo === 'recorrente') {
+    return (
+      <FormRecorrente
+        aberto
+        onFechar={fechar}
+        conta={edicao.conta}
+        membros={membros}
+        competencia={competencia}
+        recorrenteId={edicao.recorrenteId}
+      />
+    )
+  }
+  if (edicao.tipo === 'compartilhado') {
+    return (
+      <FormGastoCompartilhado
+        aberto
+        onFechar={fechar}
+        conta={edicao.conta}
+        membros={membros}
+        competencia={competencia}
+        criadoPor={criadoPor}
+        grupo={edicao.grupo}
+      />
+    )
+  }
+  return null
+}
 
 function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }: Dados & { dono: Membro }) {
   const { competencia } = useCompetencia()
@@ -122,13 +192,25 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
   const totais = calcularTotais(meus)
   const pessoais = ordenarLancamentos(meus.filter((l) => l.conta_id === conta.id))
   const compartilhadas = contas.filter((c) => c.tipo === 'compartilhada')
-  const totalDoGrupo = (grupoId: string | null) =>
-    grupoId ? somar(lancamentos.filter((l) => l.grupo_id === grupoId).map((l) => l.valor_centavos)) : 0
-
-  const abrirParte = (l: Lancamento, c: Conta) => {
-    const grupo = l.grupo_id ? lancamentos.filter((x) => x.grupo_id === l.grupo_id) : [l]
-    setEdicao({ tipo: 'compartilhado', conta: c, grupo })
+  const totalDoGrupo = (l: Lancamento) => {
+    if (l.grupo_id) return somar(lancamentos.filter((x) => x.grupo_id === l.grupo_id).map((x) => x.valor_centavos))
+    if (l.recorrente_id) {
+      return somar(lancamentos.filter((x) => x.recorrente_id === l.recorrente_id).map((x) => x.valor_centavos))
+    }
+    return l.valor_centavos
   }
+
+  const item = (l: Lancamento, c: Conta) => (
+    <ItemLancamento
+      key={l.id}
+      lancamento={l}
+      categoria={categoriaDe(categorias, l.categoria_id)}
+      hoje={dataHoje}
+      selo={seloDe(l, totalDoGrupo(l))}
+      onAlternarPago={() => alternarPago.mutate({ id: l.id, pago: !l.pago })}
+      onAbrir={() => setEdicao(edicaoPara(l, c, lancamentos))}
+    />
+  )
 
   return (
     <div className="flex flex-col gap-4 pb-20">
@@ -139,17 +221,9 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
         titulo="Pessoal"
         subtotal={calcularTotais(pessoais).saidas}
         vazio="Nenhum gasto ou entrada neste mês."
+        acao={{ texto: 'Nova conta fixa', onClick: () => setEdicao({ tipo: 'recorrente', conta }) }}
       >
-        {pessoais.map((l) => (
-          <ItemLancamento
-            key={l.id}
-            lancamento={l}
-            categoria={categoriaDe(categorias, l.categoria_id)}
-            hoje={dataHoje}
-            onAlternarPago={() => alternarPago.mutate({ id: l.id, pago: !l.pago })}
-            onAbrir={() => setEdicao({ tipo: 'pessoal', lancamento: l })}
-          />
-        ))}
+        {pessoais.map((l) => item(l, conta))}
       </Secao>
 
       {compartilhadas.map((c) => {
@@ -161,20 +235,7 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
             subtotal={calcularTotais(partes).saidas}
             vazio={`Nada de ${c.nome} para ${dono.nome} neste mês.`}
           >
-            {partes.map((l) => {
-              const total = totalDoGrupo(l.grupo_id)
-              return (
-                <ItemLancamento
-                  key={l.id}
-                  lancamento={l}
-                  categoria={categoriaDe(categorias, l.categoria_id)}
-                  hoje={dataHoje}
-                  selo={total > l.valor_centavos ? `parte de ${formatarCentavos(total)}` : undefined}
-                  onAlternarPago={() => alternarPago.mutate({ id: l.id, pago: !l.pago })}
-                  onAbrir={() => abrirParte(l, c)}
-                />
-              )
-            })}
+            {partes.map((l) => item(l, c))}
           </Secao>
         )
       })}
@@ -190,17 +251,7 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
         criadoPor={eu?.id}
         lancamento={edicao?.tipo === 'pessoal' ? edicao.lancamento : undefined}
       />
-      {edicao?.tipo === 'compartilhado' && (
-        <FormGastoCompartilhado
-          aberto
-          onFechar={() => setEdicao(null)}
-          conta={edicao.conta}
-          membros={membros}
-          competencia={competencia}
-          criadoPor={eu?.id}
-          grupo={edicao.grupo}
-        />
-      )}
+      <Formularios edicao={edicao} fechar={() => setEdicao(null)} membros={membros} criadoPor={eu?.id} />
     </div>
   )
 }
@@ -214,18 +265,40 @@ function PaginaCompartilhada({ conta, membros, lancamentos, categorias }: Dados)
 
   const daConta = lancamentos.filter((l) => l.conta_id === conta.id)
   const totais = calcularTotais(daConta)
+  const fixas = agruparPorRecorrente(ordenarLancamentos(daConta.filter((l) => l.origem === 'recorrente')))
   const avulsos = agruparPorGrupo(ordenarLancamentos(daConta.filter((l) => l.origem === 'avulso')))
   const porMembro = membros.map((m) => ({
     membro: m,
     valor: calcularTotais(daConta.filter((l) => l.membro_id === m.id)).saidas,
   }))
+  const pagar = (l: Lancamento) => alternarPago.mutate({ id: l.id, pago: !l.pago })
 
   return (
     <div className="flex flex-col gap-4 pb-20">
       <Cabecalho conta={conta} subtitulo={`Dividida entre ${membros.map((m) => m.nome).join(' e ')}`} />
       <PainelTotaisCompartilhada total={totais.saidas} pendente={totais.pendente} porMembro={porMembro} />
 
-      <Secao titulo="Contas do mês" vazio="Contas que se repetem todo mês (aluguel, luz...) chegam na etapa 5." />
+      <Secao
+        titulo="Contas fixas"
+        subtotal={somar(fixas.map((g) => g.total))}
+        vazio="Nenhuma conta fixa neste mês. Cadastre aluguel, luz, internet..."
+        acao={{ texto: 'Nova conta fixa', onClick: () => setEdicao({ tipo: 'recorrente', conta }) }}
+      >
+        {fixas.map((g) => (
+          <ItemGrupo
+            key={g.chave}
+            linhas={g.linhas}
+            total={g.total}
+            membros={membros}
+            categoria={categoriaDe(categorias, g.linhas[0].categoria_id)}
+            hoje={dataHoje}
+            selo={g.linhas.some((l) => l.editado_manualmente) ? 'valor só deste mês' : 'todo mês'}
+            onAlternarPago={pagar}
+            onAbrir={() => setEdicao({ tipo: 'recorrente', conta, recorrenteId: g.linhas[0].recorrente_id ?? undefined })}
+          />
+        ))}
+      </Secao>
+
       <Secao titulo="Compras parceladas" vazio="Compras parceladas (ex.: geladeira em 12x) chegam na etapa 6." />
 
       <Secao
@@ -241,7 +314,7 @@ function PaginaCompartilhada({ conta, membros, lancamentos, categorias }: Dados)
             membros={membros}
             categoria={categoriaDe(categorias, g.linhas[0].categoria_id)}
             hoje={dataHoje}
-            onAlternarPago={(l) => alternarPago.mutate({ id: l.id, pago: !l.pago })}
+            onAlternarPago={pagar}
             onAbrir={() => setEdicao({ tipo: 'compartilhado', conta, grupo: g.linhas })}
           />
         ))}
@@ -249,7 +322,7 @@ function PaginaCompartilhada({ conta, membros, lancamentos, categorias }: Dados)
 
       <BotaoAdicionar texto={`Gasto em ${conta.nome}`} onClick={() => setEdicao({ tipo: 'novo' })} />
 
-      {edicao && edicao.tipo !== 'pessoal' && (
+      {edicao?.tipo === 'novo' && (
         <FormGastoCompartilhado
           aberto
           onFechar={() => setEdicao(null)}
@@ -257,9 +330,9 @@ function PaginaCompartilhada({ conta, membros, lancamentos, categorias }: Dados)
           membros={membros}
           competencia={competencia}
           criadoPor={eu?.id}
-          grupo={edicao.tipo === 'compartilhado' ? edicao.grupo : undefined}
         />
       )}
+      <Formularios edicao={edicao} fechar={() => setEdicao(null)} membros={membros} criadoPor={eu?.id} />
     </div>
   )
 }

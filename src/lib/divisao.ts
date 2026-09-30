@@ -100,3 +100,21 @@ export function planejarEdicaoGrupo(linhas: LinhaExistente[], partes: Partes): P
   }
   return plano
 }
+
+/**
+ * A divisão de uma conta fixa que vale num mês: para cada membro,
+ * a linha com o maior `vigente_desde` que não passa do mês.
+ */
+export function divisaoVigente(
+  divisoes: { recorrente_id: string; membro_id: string; valor_centavos: number; vigente_desde: string }[],
+  recorrenteId: string,
+  competencia: string,
+): Partes {
+  const melhor = new Map<string, { vigente_desde: string; valor_centavos: number }>()
+  for (const d of divisoes) {
+    if (d.recorrente_id !== recorrenteId || d.vigente_desde > competencia) continue
+    const atual = melhor.get(d.membro_id)
+    if (!atual || d.vigente_desde > atual.vigente_desde) melhor.set(d.membro_id, d)
+  }
+  return Object.fromEntries([...melhor.entries()].map(([id, d]) => [id, d.valor_centavos]))
+}

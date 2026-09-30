@@ -21,7 +21,8 @@ Abra o endereço que aparecer no terminal (normalmente `http://localhost:5173/Co
 Projeto: `kiygwquaypxjjphxlkvv`. Tudo é feito no painel do Supabase, uma vez só.
 
 1. **SQL Editor → New query**: cole e rode, **nesta ordem**, cada arquivo de `supabase/migrations/`:
-   `0001_estrutura.sql` → `0002_seguranca.sql` → `0003_categorias.sql`
+   `0001_estrutura.sql` → `0002_seguranca.sql` → `0003_categorias.sql` → `0004_contas_fixas.sql`
+   (cada arquivo roda uma vez só; quando surgir uma migration nova, rode só a nova)
 2. **Authentication → Users → Add user → Create new user**: crie o usuário do Lucas e o da Emillia (e-mail e senha, marque *Auto Confirm User*).
 3. **Authentication → Sign In / Providers**: desligue *Allow new users to sign up*.
 4. Abra `supabase/setup_casal.sql`, troque o e-mail da Emillia (e confira o do Lucas) e rode no **SQL Editor**.
@@ -44,7 +45,7 @@ Para conferir: em **Table Editor**, a tabela `contas` deve ter Lucas, Emillia e 
 - [x] Etapa 2: banco de dados (estrutura, segurança, categorias, cadastro do casal)
 - [x] Etapa 3: login e navegação (login, abas vindas do banco, seletor de mês)
 - [x] Etapa 4: lançamentos avulsos (pessoais, gastos divididos, marcar pago, editar, excluir)
-- [ ] Etapa 5: contas recorrentes
+- [x] Etapa 5: contas fixas (aluguel, luz, salário; divisão com vigência; só este mês; encerrar)
 - [ ] Etapa 6: compras parceladas
 - [ ] Etapa 7: resumo do mês
 - [ ] Etapa 8: contas dinâmicas e configurações

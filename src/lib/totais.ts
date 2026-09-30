@@ -66,9 +66,20 @@ export type Grupo<T> = { chave: string; linhas: T[]; total: number }
 export function agruparPorGrupo<T extends Pick<Lancamento, 'id' | 'grupo_id' | 'valor_centavos'>>(
   ls: T[],
 ): Grupo<T>[] {
+  return agruparPor(ls, (l) => l.grupo_id ?? l.id)
+}
+
+/** Junta as partes de uma mesma conta fixa no mês (mesmo recorrente_id) */
+export function agruparPorRecorrente<T extends Pick<Lancamento, 'id' | 'recorrente_id' | 'valor_centavos'>>(
+  ls: T[],
+): Grupo<T>[] {
+  return agruparPor(ls, (l) => l.recorrente_id ?? l.id)
+}
+
+function agruparPor<T extends Pick<Lancamento, 'valor_centavos'>>(ls: T[], chaveDe: (l: T) => string): Grupo<T>[] {
   const mapa = new Map<string, T[]>()
   for (const l of ls) {
-    const chave = l.grupo_id ?? l.id
+    const chave = chaveDe(l)
     mapa.set(chave, [...(mapa.get(chave) ?? []), l])
   }
   return [...mapa.entries()].map(([chave, linhas]) => ({

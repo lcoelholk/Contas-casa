@@ -14,7 +14,12 @@ export function useLancamentos(competencia: Competencia) {
     queryKey: [CHAVE, competencia],
     enabled: Boolean(sessao),
     queryFn: async (): Promise<Lancamento[]> => {
-      const { data, error } = await db()
+      const cliente = db()
+      // Cria no mês as contas fixas e parcelas que ainda não existem (não duplica)
+      const gerado = await cliente.rpc('gerar_competencia', { p_mes: competencia })
+      if (gerado.error && !funcaoAusente(gerado.error)) throw gerado.error
+
+      const { data, error } = await cliente
         .from('lancamentos')
         .select('*')
         .eq('competencia', competencia)
@@ -23,6 +28,11 @@ export function useLancamentos(competencia: Competencia) {
       return data as Lancamento[]
     },
   })
+}
+
+/** A migration 0004 ainda não foi rodada: o app segue funcionando sem a geração automática */
+function funcaoAusente(erro: { code?: string; message?: string }) {
+  return erro.code === 'PGRST202' || /could not find the function/i.test(erro.message ?? '')
 }
 
 export function useCategorias() {
