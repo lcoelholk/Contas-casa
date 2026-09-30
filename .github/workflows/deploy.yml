@@ -36,11 +36,11 @@ jobs:
 
       - name: Conferir as chaves do Supabase
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY }}
         run: |
           if [ -z "$VITE_SUPABASE_URL" ] || [ -z "$VITE_SUPABASE_ANON_KEY" ]; then
-            echo "::error::Faltam os Secrets VITE_SUPABASE_URL e/ou VITE_SUPABASE_ANON_KEY (Settings → Secrets and variables → Actions)."
+            echo "::error::Faltam VITE_SUPABASE_URL e/ou VITE_SUPABASE_ANON_KEY. Cadastre em Settings → Secrets and variables → Actions → aba Secrets (ou Variables) → Repository."
             exit 1
           fi
 
@@ -55,8 +55,8 @@ jobs:
 
       - name: Montar o app
         env:
-          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL || vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY || vars.VITE_SUPABASE_ANON_KEY }}
         run: npm run build
 
       - uses: actions/upload-pages-artifact@v5
