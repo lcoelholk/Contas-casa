@@ -49,4 +49,4 @@ Para conferir: em **Table Editor**, a tabela `contas` deve ter Lucas, Emillia e 
 - [ ] Etapa 7: resumo do mês
 - [ ] Etapa 8: contas dinâmicas e configurações
 - [ ] Etapa 9: tempo real e instalação no celular
-- [ ] Etapa 10: publicação no GitHub Pages
+- [x] Etapa 10: publicação no GitHub Pages (https://lcoelholk.github.io/Contas-casa/)
