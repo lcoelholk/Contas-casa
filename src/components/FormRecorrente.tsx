@@ -7,6 +7,7 @@ import {
   useAlterarRecorrente,
   useCriarRecorrente,
   useEditarMesRecorrente,
+  useDefinirFimRecorrente,
   useEncerrarRecorrente,
   useExcluirRecorrente,
   useRecorrentes,
@@ -134,6 +135,7 @@ function CamposDaquiEmDiante({
   const alterar = useAlterarRecorrente()
   const encerrar = useEncerrarRecorrente()
   const excluir = useExcluirRecorrente()
+  const definirFim = useDefinirFimRecorrente()
 
   const inicial = useMemo(() => {
     if (!recorrente) return undefined
@@ -147,6 +149,9 @@ function CamposDaquiEmDiante({
   const [descricao, setDescricao] = useState(recorrente?.descricao ?? '')
   const [categoriaId, setCategoriaId] = useState(recorrente?.categoria_id ?? '')
   const [dia, setDia] = useState(recorrente?.dia_vencimento ? String(recorrente.dia_vencimento) : '')
+  const [temLimite, setTemLimite] = useState<'nao' | 'sim'>(recorrente?.fim ? 'sim' : 'nao')
+  // input type="month" usa "AAAA-MM"
+  const [ate, setAte] = useState(recorrente?.fim?.slice(0, 7) ?? '')
   const [erro, setErro] = useState<string | null>(null)
   const [confirmando, setConfirmando] = useState<'encerrar' | 'excluir' | null>(null)
 
@@ -159,6 +164,10 @@ function CamposDaquiEmDiante({
     if (!descricao.trim()) return setErro('Escreva uma descrição.')
     const problema = divisao.validar()
     if (problema) return setErro(problema)
+    const fim = temLimite === 'sim' && ate ? `${ate}-01` : null
+    const inicio = recorrente?.inicio ?? competencia
+    if (temLimite === 'sim' && !fim) return setErro('Escolha até que mês ela vai.')
+    if (fim && fim < inicio) return setErro(`O último mês não pode ser antes do início (${nomeDaCompetencia(inicio)}).`)
 
     const dados = {
       descricao: descricao.trim(),
@@ -167,8 +176,12 @@ function CamposDaquiEmDiante({
       partes: divisao.partes,
     }
     try {
-      if (recorrente) await alterar.mutateAsync({ ...dados, id: recorrente.id, desde: competencia })
-      else await criar.mutateAsync({ ...dados, conta_id: conta.id, tipo, inicio: competencia })
+      if (recorrente) {
+        await alterar.mutateAsync({ ...dados, id: recorrente.id, desde: competencia })
+        if (fim !== recorrente.fim) await definirFim.mutateAsync({ id: recorrente.id, fim })
+      } else {
+        await criar.mutateAsync({ ...dados, conta_id: conta.id, tipo, inicio: competencia, fim })
+      }
       onFechar()
     } catch (err) {
       setErro(`Não foi possível salvar: ${(err as Error).message}`)
@@ -246,6 +259,37 @@ function CamposDaquiEmDiante({
         </select>
       </Campo>
 
+      <Campo
+        rotulo="Até quando"
+        dica={
+          temLimite === 'sim'
+            ? 'Depois desse mês ela para de aparecer sozinha (ex.: aluguel com contrato).'
+            : 'Aparece todo mês até você encerrar (ex.: academia).'
+        }
+      >
+        <Segmentado
+          rotulo="Até quando"
+          valor={temLimite}
+          onChange={setTemLimite}
+          opcoes={[
+            { valor: 'nao', texto: 'Sem data limite' },
+            { valor: 'sim', texto: 'Até um mês' },
+          ]}
+        />
+      </Campo>
+      {temLimite === 'sim' && (
+        <Campo rotulo="Último mês">
+          <input
+            type="month"
+            value={ate}
+            min={(recorrente?.inicio ?? competencia).slice(0, 7)}
+            onChange={(e) => setAte(e.target.value)}
+            className={classeInput}
+            aria-label="Último mês"
+          />
+        </Campo>
+      )}
+
       <p className="rounded-xl bg-stone-50 px-3 py-2 text-sm text-stone-600">
         {recorrente ? (
           <>
@@ -254,14 +298,22 @@ function CamposDaquiEmDiante({
           </>
         ) : (
           <>
-            Começa em <strong className="lowercase">{mes}</strong> e aparece todo mês até ser encerrada.
+            Começa em <strong className="lowercase">{mes}</strong> e aparece todo mês
+            {temLimite === 'sim' && ate ? (
+              <>
+                {' '}
+                até <strong className="lowercase">{nomeDaCompetencia(`${ate}-01`)}</strong>.
+              </>
+            ) : (
+              ' até ser encerrada.'
+            )}
           </>
         )}
       </p>
 
       <ErroFormulario mensagem={erro} />
 
-      <BotoesFormulario salvando={criar.isPending || alterar.isPending} textoSalvar={recorrente ? 'Salvar' : 'Criar conta fixa'} />
+      <BotoesFormulario salvando={criar.isPending || alterar.isPending || definirFim.isPending} textoSalvar={recorrente ? 'Salvar' : 'Criar conta fixa'} />
 
       {recorrente && (
         <div className="flex flex-col gap-1 border-t border-stone-100 pt-3">

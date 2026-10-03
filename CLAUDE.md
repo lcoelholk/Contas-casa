@@ -68,6 +68,7 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 - **(+)** abre "novo lançamento" de qualquer tela: escolhe a aba (as de quem entrou primeiro) e o tipo (só desta vez, todo mês, parcelado)
 - **Análises** = Gráficos + Metas e limites (alternados no topo)
 - **Mais:** suas contas (a sua aba e as compartilhadas), Contas fixas, Nova conta, Ajustes, as abas do outro ("Do outro") e Sair
+- **Filtros e ordenação ficam escondidos:** cada tela com filtro mostra só os botões **Filtrar** e **Ordenar** (`BarraFiltros` em `src/components/Filtros.tsx`). Filtrar abre um painel com as opções em etiquetas; os filtros ligados aparecem como etiquetas com ✕ (e "Limpar tudo"). Vale para Início, Transações e Gráficos.
 - **Cada um vê primeiro o que é seu:** o filtro de pessoa (Início, Transações, Gráficos) começa em quem entrou e vale para todas as telas até sair do app (`usePessoa`); um toque troca para "Os dois". Os dados continuam compartilhados (RLS igual).
 
 ### Início (antigo "Resumo"/"Visão geral")
@@ -111,6 +112,7 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 - Total fixo por mês de cada pessoa (e entradas fixas, como salário)
 - "Começam depois" e "Encerradas" em listas recolhidas; tocar abre a edição
 - "+ Nova conta fixa": escolhe a aba e abre o formulário
+- **Até quando:** sem data limite (academia) ou até um mês (aluguel com contrato). Com limite, a lista mostra "até jul/27 · faltam 9 meses". Criar com limite = `criar_recorrente` + `encerrar_recorrente`; tirar o limite = `fim = null` (a geração volta a criar os meses)
 
 ### Novo lançamento em qualquer conta
 - `NovoLancamento` (Transações e Contas fixas): escolhe a aba e depois o tipo: **só desta vez** (avulso), **todo mês** (conta fixa) ou **parcelado**

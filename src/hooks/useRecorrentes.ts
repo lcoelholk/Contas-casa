@@ -53,8 +53,10 @@ export type DadosRecorrente = {
 export function useCriarRecorrente() {
   const invalidar = useInvalidar()
   return useMutation({
-    mutationFn: async (a: DadosRecorrente & { conta_id: string; tipo: TipoMovimento; inicio: Competencia }) => {
-      const { error } = await db().rpc('criar_recorrente', {
+    mutationFn: async (
+      a: DadosRecorrente & { conta_id: string; tipo: TipoMovimento; inicio: Competencia; fim: Competencia | null },
+    ) => {
+      const { data: id, error } = await db().rpc('criar_recorrente', {
         p_conta: a.conta_id,
         p_tipo: a.tipo,
         p_descricao: a.descricao,
@@ -64,6 +66,11 @@ export function useCriarRecorrente() {
         p_partes: a.partes,
       })
       if (error) throw erroDoBanco(error)
+      // Com data limite: o último mês em que aparece
+      if (a.fim) {
+        const fim = await db().rpc('encerrar_recorrente', { p_id: id as string, p_ultimo_mes: a.fim })
+        if (fim.error) throw erroDoBanco(fim.error)
+      }
     },
     onSuccess: invalidar,
   })
@@ -151,6 +158,23 @@ export function useExcluirRecorrente() {
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await db().rpc('excluir_recorrente', { p_id: id })
+      if (error) throw erroDoBanco(error)
+    },
+    onSuccess: invalidar,
+  })
+}
+
+/**
+ * Muda a data limite de uma conta fixa: um mês (último em que aparece) ou null (sem limite).
+ * Encurtar remove os meses seguintes ainda não pagos; tirar o limite volta a gerar os meses.
+ */
+export function useDefinirFimRecorrente() {
+  const invalidar = useInvalidar()
+  return useMutation({
+    mutationFn: async ({ id, fim }: { id: string; fim: Competencia | null }) => {
+      const { error } = fim
+        ? await db().rpc('encerrar_recorrente', { p_id: id, p_ultimo_mes: fim })
+        : await db().from('recorrentes').update({ fim: null }).eq('id', id)
       if (error) throw erroDoBanco(error)
     },
     onSuccess: invalidar,
