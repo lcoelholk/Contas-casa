@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useCompetencia } from '../hooks/useCompetencia.tsx'
+import { usePessoa } from '../hooks/usePessoa.tsx'
+import { AbasAnalises } from '../components/AbasAnalises.tsx'
 import { useMembros, useTodasContas } from '../hooks/useDados.ts'
 import { useCategorias } from '../hooks/useLancamentos.ts'
 import { useLancamentosPeriodo } from '../hooks/useAnalises.ts'
@@ -34,7 +36,7 @@ export default function Graficos() {
   const contas = useTodasContas()
   const categorias = useCategorias()
   const [periodo, setPeriodo] = useState<Periodo>('6')
-  const [pessoa, setPessoa] = useState('todos')
+  const { pessoa, setPessoa } = usePessoa()
 
   // O período termina no mês escolhido no seletor lá em cima
   const de = somarMeses(competencia, -(Number(periodo) - 1))
@@ -51,6 +53,7 @@ export default function Graficos() {
 
   return (
     <div className="flex flex-col gap-4">
+      <AbasAnalises />
       <div>
         <h1 className="text-lg font-semibold">Gráficos</h1>
         <p className="text-sm text-stone-500">

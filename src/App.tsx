@@ -13,6 +13,7 @@ import Graficos from './pages/Graficos.tsx'
 import Metas from './pages/Metas.tsx'
 import Transacoes from './pages/Transacoes.tsx'
 import Fixas from './pages/Fixas.tsx'
+import Mais from './pages/Mais.tsx'
 
 export default function App() {
   // Sem .env.local preenchido, mostra só a tela de configuração
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="metas" element={<Metas />} />
             <Route path="transacoes" element={<Transacoes />} />
             <Route path="fixas" element={<Fixas />} />
+            <Route path="mais" element={<Mais />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -63,8 +63,16 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 - Interface em português, pensada primeiro para celular
 - Valores em reais, formatados com `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`
 
-### Visão geral (tela inicial, antigo "Resumo")
-- Filtro de pessoa no topo (os dois, Lucas, Emillia) para os blocos de análise
+### Navegação
+- **Barra fixa embaixo:** Início · Transações · **(+)** · Análises · Mais
+- **(+)** abre "novo lançamento" de qualquer tela: escolhe a aba (as de quem entrou primeiro) e o tipo (só desta vez, todo mês, parcelado)
+- **Análises** = Gráficos + Metas e limites (alternados no topo)
+- **Mais:** suas contas (a sua aba e as compartilhadas), Contas fixas, Nova conta, Ajustes, as abas do outro ("Do outro") e Sair
+- **Cada um vê primeiro o que é seu:** o filtro de pessoa (Início, Transações, Gráficos) começa em quem entrou e vale para todas as telas até sair do app (`usePessoa`); um toque troca para "Os dois". Os dados continuam compartilhados (RLS igual).
+
+### Início (antigo "Resumo"/"Visão geral")
+- Atalhos: ir para "Minhas contas" e as compartilhadas, e lançar gasto, conta fixa ou parcelado sem trocar de tela
+- Filtro de pessoa no topo; cards de pessoa e vencimentos seguem o filtro
 - **Como está o mês:** frase comparando o gasto até hoje com o mesmo ponto do mês passado, gasto até hoje, variação % e maior categoria
 - **Ritmo de gastos:** linha do gasto acumulado dia a dia, este mês vs mês passado
 - Lista **"Vence nos próximos 7 dias"** e **atrasados** (não pagos, dos dois)

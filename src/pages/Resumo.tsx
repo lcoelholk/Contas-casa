@@ -1,6 +1,9 @@
-import { useState, type ReactNode } from 'react'
+import type { ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCompetencia } from '../hooks/useCompetencia.tsx'
+import { usePessoa } from '../hooks/usePessoa.tsx'
+import { useNovoLancamento } from '../hooks/useNovoLancamento.tsx'
+import { abasDoMembro } from '../lib/contas.ts'
 import { useMembroAtual, useMembros, useTodasContas } from '../hooks/useDados.ts'
 import { useAlertas, useCategorias, useLancamentos, useMarcarPago } from '../hooks/useLancamentos.ts'
 import {
@@ -34,7 +37,7 @@ export default function Resumo() {
   const lancamentos = useLancamentos(competencia)
   const anteriores = useLancamentos(somarMeses(competencia, -1))
   const categorias = useCategorias()
-  const [pessoa, setPessoa] = useState('todos')
+  const { pessoa, setPessoa } = usePessoa()
 
   if (membros.isPending || contas.isPending || lancamentos.isPending) return <Carregando />
   if (lancamentos.isError) {
@@ -61,20 +64,21 @@ export default function Resumo() {
         onChange={setPessoa}
         opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...listaMembros.map((m) => ({ valor: m.id, texto: m.nome }))]}
       />
+      <Atalhos contas={listaContas} />
       <RitmoDoMes
         atual={doMes}
         anterior={doMesAnterior}
         categorias={categorias.data ?? []}
         nome={listaMembros.find((m) => m.id === pessoa)?.nome}
       />
-      <Alertas membros={listaMembros} contas={listaContas} />
+      <Alertas membros={listaMembros} contas={listaContas} pessoa={pessoa} />
 
       <h1 className="mt-2 text-lg font-semibold">
         Resumo de <span className="lowercase">{nomeDaCompetencia(competencia)}</span>
       </h1>
 
       <div className="grid gap-3 sm:grid-cols-2">
-        {listaMembros.map((m) => {
+        {listaMembros.filter((m) => pessoa === 'todos' || m.id === pessoa).map((m) => {
           const conta = contaPrincipalDe(listaContas, m.id)
           const t = calcularTotais(todos.filter((l) => l.membro_id === m.id))
           return (
@@ -133,7 +137,7 @@ export default function Resumo() {
 }
 
 /** Atrasados e o que vence nos próximos 7 dias (a partir de hoje, de qualquer mês) */
-function Alertas({ membros, contas }: { membros: Membro[]; contas: Conta[] }) {
+function Alertas({ membros, contas, pessoa }: { membros: Membro[]; contas: Conta[]; pessoa: string }) {
   const alertas = useAlertas()
   const marcarPago = useMarcarPago()
   const { irPara } = useCompetencia()
@@ -143,7 +147,10 @@ function Alertas({ membros, contas }: { membros: Membro[]; contas: Conta[] }) {
   if (alertas.isPending) return null
   if (alertas.isError) return <Aviso titulo="Não foi possível carregar os vencimentos">{alertas.error.message}</Aviso>
 
-  const { atrasados, proximos } = separarAlertas(alertas.data ?? [], dataHoje)
+  const { atrasados, proximos } = separarAlertas(
+    (alertas.data ?? []).filter((l) => pessoa === 'todos' || l.membro_id === pessoa),
+    dataHoje,
+  )
   const abrir = (l: Lancamento) => {
     irPara(l.competencia)
     navigate(`/conta/${l.conta_id}`)
@@ -350,17 +357,21 @@ function RitmoDoMes({
   const diaHoje = ehMesAtual ? diaDe(hoje()) : porDia.length
   const r = ritmo(porDia, porDiaAnterior, diaHoje)
   const maior = comparativoCategorias(atual, [], categorias)[0]
-  const quem = nome ?? 'vocês'
+  const ehEu = Boolean(nome) && nome === eu?.nome
+  const doMes = ehEu ? 'o seu mês' : nome ? `o mês de ${nome}` : 'o mês de vocês'
+  const previstoNoMes = porDia.reduce((s, v) => s + v, 0)
   const mesAnterior = nomeCurtoDoMes(somarMeses(competencia, -1))
 
   const frase =
     r.percentual === null
       ? r.atual === 0
-        ? 'Nenhum gasto lançado ainda neste mês.'
+        ? previstoNoMes > 0
+          ? `Até hoje nada saiu. Previsto para o mês: ${formatarCentavos(previstoNoMes)}.`
+          : 'Nenhum gasto lançado ainda neste mês.'
         : porDiaAnterior.some((v) => v > 0)
           ? `Até agora, ${formatarCentavos(r.atual)}. No mesmo ponto de ${mesAnterior} ainda não tinha gasto nada.`
           : `Primeiro mês com gastos para comparar. Até agora, ${formatarCentavos(r.atual)}.`
-      : `${nome ?? 'Vocês'} ${ehMesAtual ? (nome ? 'começou' : 'começaram') : nome ? 'fechou' : 'fecharam'} o mês gastando ${Math.abs(r.percentual)}% ${
+      : `${ehEu ? 'Você' : (nome ?? 'Vocês')} ${ehMesAtual ? (nome ? 'começou' : 'começaram') : nome ? 'fechou' : 'fecharam'} o mês gastando ${Math.abs(r.percentual)}% ${
           r.percentual <= 0 ? 'menos' : 'mais'
         } que ${ehMesAtual ? `no mesmo ponto de ${mesAnterior}` : `em ${mesAnterior}`}.${
           r.percentual <= -10 ? ' Bom ritmo!' : r.percentual >= 10 ? ' Vale ficar de olho.' : ''
@@ -371,7 +382,7 @@ function RitmoDoMes({
 
   return (
     <section aria-label="Como está o mês" className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-      <p className="text-lg font-semibold text-marca-700">Oi, {eu?.nome ?? 'tudo bem'}! Como está o mês de {quem}?</p>
+      <p className="text-lg font-semibold text-marca-700">Oi, {eu?.nome ?? 'tudo bem'}! Como está {doMes}?</p>
       <p className="mt-1 text-sm text-stone-700">{ehFuturo ? 'Este mês ainda não começou: aparecem só as contas fixas e parcelas já previstas.' : frase}</p>
 
       <div className="mt-3 grid grid-cols-3 gap-2">
@@ -571,5 +582,51 @@ function PrincipaisCategorias({
         </>
       )}
     </Painel>
+  )
+}
+
+/** Atalhos do Início: ir para as abas de quem entrou e lançar sem trocar de tela */
+function Atalhos({ contas }: { contas: Conta[] }) {
+  const { membro: eu } = useMembroAtual()
+  const novo = useNovoLancamento()
+  const { minhas, compartilhadas } = abasDoMembro(contas, eu?.id)
+  const classeLink =
+    'flex shrink-0 items-center gap-2 rounded-2xl border border-stone-200 bg-white px-3 py-2.5 text-sm font-medium shadow-sm hover:border-stone-300'
+  const classeAcao =
+    'flex flex-col items-center gap-1 rounded-2xl bg-marca-50 px-2 py-3 text-xs font-semibold text-marca-700 hover:bg-marca-100'
+  return (
+    <section aria-label="Atalhos" className="flex flex-col gap-3">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
+        {[...minhas, ...compartilhadas].map((c) => (
+          <Link key={c.id} to={`/conta/${c.id}`} className={classeLink}>
+            <Bolinha cor={c.cor} />
+            {c.tipo === 'pessoal' && c.dono_id === eu?.id && minhas[0]?.id === c.id ? 'Minhas contas' : c.nome}
+            <span aria-hidden className="text-stone-400">
+              ›
+            </span>
+          </Link>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <button type="button" onClick={() => novo('avulso')} className={classeAcao}>
+          <span aria-hidden className="text-xl">
+            🧾
+          </span>
+          Gasto ou entrada
+        </button>
+        <button type="button" onClick={() => novo('fixa')} className={classeAcao}>
+          <span aria-hidden className="text-xl">
+            🔁
+          </span>
+          Conta fixa
+        </button>
+        <button type="button" onClick={() => novo('parcelada')} className={classeAcao}>
+          <span aria-hidden className="text-xl">
+            💳
+          </span>
+          Parcelado
+        </button>
+      </div>
+    </section>
   )
 }

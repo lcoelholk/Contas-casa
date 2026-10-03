@@ -28,6 +28,7 @@ import { CORES } from '../lib/contas.ts'
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
 import { Folha } from '../components/Folha.tsx'
 import { Medidor } from '../components/graficos.tsx'
+import { AbasAnalises } from '../components/AbasAnalises.tsx'
 import {
   BotoesFormulario,
   Campo,
@@ -45,7 +46,8 @@ export default function Metas() {
   if (membros.isPending || categorias.isPending) return <Carregando />
   return (
     <div className="flex flex-col gap-4 pb-6">
-      <h1 className="text-lg font-semibold">Metas</h1>
+      <AbasAnalises />
+      <h1 className="text-lg font-semibold">Metas e limites</h1>
       <MetasDeEconomia membros={membros.data ?? []} />
       <Orcamentos membros={membros.data ?? []} categorias={categorias.data ?? []} />
     </div>

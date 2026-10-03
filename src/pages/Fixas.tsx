@@ -101,7 +101,7 @@ export default function Fixas() {
         </ListaSimples>
       )}
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-20">
         <div className="mx-auto flex max-w-3xl justify-end px-4">
           <button
             onClick={() => setNova(true)}

@@ -11,7 +11,7 @@ import { formatarData, nomeCurtoDoMes, nomeDaCompetencia, somarMeses } from '../
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
 import { CheckPago } from '../components/lancamentos.tsx'
 import { classeInput } from '../components/campos.tsx'
-import { NovoLancamento } from '../components/NovoLancamento.tsx'
+import { usePessoa } from '../hooks/usePessoa.tsx'
 import type { Conta, Lancamento } from '../types/banco.ts'
 
 const POR_PAGINA = 20
@@ -35,7 +35,7 @@ export default function Transacoes() {
   const [meses, setMeses] = useState(1)
   const [filtro, setFiltro] = useState(FILTRO_INICIAL)
   const [mostrando, setMostrando] = useState(POR_PAGINA)
-  const [nova, setNova] = useState(false)
+  const { pessoa, setPessoa } = usePessoa()
 
   const de = somarMeses(competencia, -(meses - 1))
   const dados = useLancamentosPeriodo(de, competencia)
@@ -51,7 +51,7 @@ export default function Transacoes() {
   const listaContas = contas.data ?? []
   const listaMembros = membros.data ?? []
   const listaCategorias = categorias.data ?? []
-  const filtradas = filtrarTransacoes(dados.data ?? [], filtro)
+  const filtradas = filtrarTransacoes(dados.data ?? [], { ...filtro, membroId: pessoa === 'todos' ? null : pessoa })
   const t = calcularTotais(filtradas)
   const algumFiltro = JSON.stringify(filtro) !== JSON.stringify({ ...FILTRO_INICIAL, ordem: filtro.ordem })
 
@@ -81,7 +81,14 @@ export default function Transacoes() {
           <option value="maior">Maior valor</option>
           <option value="menor">Menor valor</option>
         </Seletor>
-        <Seletor rotulo="Pessoa" valor={filtro.membroId ?? ''} onChange={(v) => mudar({ membroId: v || null })}>
+        <Seletor
+          rotulo="Pessoa"
+          valor={pessoa === 'todos' ? '' : pessoa}
+          onChange={(v) => {
+            setPessoa(v || 'todos')
+            setMostrando(POR_PAGINA)
+          }}
+        >
           <option value="">Os dois</option>
           {listaMembros.map((m) => (
             <option key={m.id} value={m.id}>
@@ -193,20 +200,6 @@ export default function Transacoes() {
         </div>
       </section>
 
-      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-20 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-        <div className="mx-auto flex max-w-3xl justify-end px-4">
-          <button
-            onClick={() => setNova(true)}
-            className="pointer-events-auto flex h-12 items-center gap-2 rounded-full bg-marca-600 px-5 font-semibold text-white shadow-lg active:scale-[0.98]"
-          >
-            <span aria-hidden className="text-xl leading-none">
-              +
-            </span>
-            Nova transação
-          </button>
-        </div>
-      </div>
-      <NovoLancamento aberto={nova} onFechar={() => setNova(false)} contas={listaContas.filter((c) => !c.arquivada)} />
     </div>
   )
 }
