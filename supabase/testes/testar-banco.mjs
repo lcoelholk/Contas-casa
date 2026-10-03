@@ -379,6 +379,18 @@ await como('anon', null)
 await deveFalhar(`select count(*) from meta_aportes`, 'visitante sem login não lê aportes')
 await deveFalhar(`select gerar_periodo('2026-10-01', '2026-11-01')`, 'visitante sem login não gera período')
 
+// Conta fixa com data limite (ex.: aluguel com contrato) e depois sem limite
+console.log('\n— Conta fixa com data limite —')
+await como('authenticated', 'lucascoelho855@gmail.com')
+const contrato = (await q(`select criar_recorrente($1, 'saida', 'Aluguel contrato', null, 5, '2029-01-01', $2::jsonb) id`, [idCasa, partes(100000, 100000)]))[0].id
+await q(`select encerrar_recorrente($1, '2029-03-01')`, [contrato])
+await q(`select gerar_periodo('2029-01-01', '2029-06-01')`)
+const mesesDe = async (id) => (await q(`select count(distinct competencia)::int n from lancamentos where recorrente_id = $1`, [id]))[0].n
+ok((await mesesDe(contrato)) === 3, 'com data limite: aparece só até o último mês (jan a mar)')
+await q(`update recorrentes set fim = null where id = $1`, [contrato])
+await q(`select gerar_periodo('2029-01-01', '2029-06-01')`)
+ok((await mesesDe(contrato)) === 6, 'tirando o limite, volta a aparecer nos meses seguintes')
+
 await db.exec('reset role')
 console.log(falhas === 0 ? '\nTudo certo.' : `\n${falhas} falha(s).`)
 process.exit(falhas === 0 ? 0 : 1)

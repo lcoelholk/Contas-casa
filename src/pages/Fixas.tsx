@@ -3,7 +3,7 @@ import { useCompetencia } from '../hooks/useCompetencia.tsx'
 import { useMembros, useTodasContas } from '../hooks/useDados.ts'
 import { useCategorias } from '../hooks/useLancamentos.ts'
 import { useRecorrentes } from '../hooks/useRecorrentes.ts'
-import { ativaNoMes, fixasDoMes, totaisFixos, type FixaDoMes } from '../lib/fixas.ts'
+import { ativaNoMes, fixasDoMes, textoDoLimite, totaisFixos, type FixaDoMes } from '../lib/fixas.ts'
 import { formatarCentavos } from '../lib/dinheiro.ts'
 import { nomeCurtoDoMes, nomeDaCompetencia } from '../lib/datas.ts'
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
@@ -86,6 +86,7 @@ export default function Fixas() {
             membros={listaMembros}
             categorias={categorias.data ?? []}
             onAbrir={setEditando}
+            competencia={competencia}
           />
         ))
       )}
@@ -148,8 +149,10 @@ function GrupoDaConta({
   membros,
   categorias,
   onAbrir,
+  competencia,
 }: {
   conta: Conta
+  competencia: string
   fixas: FixaDoMes[]
   membros: Membro[]
   categorias: { id: string; nome: string; icone: string | null }[]
@@ -184,8 +187,11 @@ function GrupoDaConta({
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span className="truncate font-medium">{r.descricao}</span>
-                  <span className="truncate text-xs text-stone-500">
+                  <span className="text-xs text-stone-500">
                     {r.dia_vencimento ? `${entrada ? 'cai' : 'vence'} dia ${r.dia_vencimento}` : 'sem dia fixo'}
+                    {textoDoLimite(r, competencia) && (
+                      <span className="font-medium text-amber-700"> · {textoDoLimite(r, competencia)}</span>
+                    )}
                   </span>
                   {conta.tipo === 'compartilhada' && comValor.length > 0 && (
                     <span className="flex flex-wrap gap-x-2 text-xs text-stone-600">

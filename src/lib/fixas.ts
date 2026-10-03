@@ -1,6 +1,6 @@
 /** Contas fixas (recorrentes) de um mês, com a divisão que vale nele */
 import { divisaoVigente, somaPartes, type Partes } from './divisao.ts'
-import type { Competencia } from './datas.ts'
+import { mesesEntre, nomeCurtoDoMes, type Competencia } from './datas.ts'
 import type { Recorrente, RecorrenteDivisao } from '../types/banco.ts'
 
 export type FixaDoMes = { recorrente: Recorrente; partes: Partes; total: number }
@@ -36,4 +36,12 @@ export function totaisFixos(fixas: FixaDoMes[], membroIds: string[]) {
     saidas: fixas.filter((f) => f.recorrente.tipo === 'saida').reduce((s, f) => s + (f.partes[id] ?? 0), 0),
     entradas: fixas.filter((f) => f.recorrente.tipo === 'entrada').reduce((s, f) => s + (f.partes[id] ?? 0), 0),
   }))
+}
+
+/** "até jul/27 · faltam 10 meses", "último mês" ou null (sem data limite) */
+export function textoDoLimite(r: Pick<Recorrente, 'fim'>, competencia: Competencia): string | null {
+  if (!r.fim) return null
+  const faltam = mesesEntre(competencia, r.fim)
+  if (faltam <= 0) return 'último mês'
+  return `até ${nomeCurtoDoMes(r.fim, true)} · ${faltam === 1 ? 'falta 1 mês' : `faltam ${faltam} meses`}`
 }

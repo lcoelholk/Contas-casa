@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { ativaNoMes, fixasDoMes, totaisFixos } from './fixas.ts'
+import { ativaNoMes, fixasDoMes, textoDoLimite, totaisFixos } from './fixas.ts'
 import type { Recorrente, RecorrenteDivisao } from '../types/banco.ts'
 
 const r = (id: string, extra: Partial<Recorrente> = {}): Recorrente => ({
@@ -68,5 +68,14 @@ describe('fixasDoMes e totaisFixos', () => {
       { membroId: 'L', saidas: 132000, entradas: 500000 },
       { membroId: 'E', saidas: 80000, entradas: 0 },
     ])
+  })
+})
+
+describe('textoDoLimite', () => {
+  it('sem limite, meses que faltam e último mês', () => {
+    expect(textoDoLimite({ fim: null }, '2026-10-01')).toBeNull()
+    expect(textoDoLimite({ fim: '2027-07-01' }, '2026-10-01')).toBe('até jul/27 · faltam 9 meses')
+    expect(textoDoLimite({ fim: '2026-11-01' }, '2026-10-01')).toBe('até nov/26 · falta 1 mês')
+    expect(textoDoLimite({ fim: '2026-10-01' }, '2026-10-01')).toBe('último mês')
   })
 })

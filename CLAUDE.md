@@ -112,6 +112,7 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 - Total fixo por mês de cada pessoa (e entradas fixas, como salário)
 - "Começam depois" e "Encerradas" em listas recolhidas; tocar abre a edição
 - "+ Nova conta fixa": escolhe a aba e abre o formulário
+- **Até quando:** sem data limite (academia) ou até um mês (aluguel com contrato). Com limite, a lista mostra "até jul/27 · faltam 9 meses". Criar com limite = `criar_recorrente` + `encerrar_recorrente`; tirar o limite = `fim = null` (a geração volta a criar os meses)
 
 ### Novo lançamento em qualquer conta
 - `NovoLancamento` (Transações e Contas fixas): escolhe a aba e depois o tipo: **só desta vez** (avulso), **todo mês** (conta fixa) ou **parcelado**
