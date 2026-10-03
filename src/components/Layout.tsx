@@ -58,6 +58,9 @@ export function Layout() {
             <NavLink to="/transacoes" className={classeAba}>
               Transações
             </NavLink>
+            <NavLink to="/fixas" className={classeAba}>
+              Contas fixas
+            </NavLink>
             <NavLink to="/graficos" className={classeAba}>
               Gráficos
             </NavLink>
