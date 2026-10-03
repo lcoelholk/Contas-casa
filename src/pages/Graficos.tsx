@@ -111,7 +111,7 @@ export default function Graficos() {
 
 function Cartao({ titulo, subtitulo, children }: { titulo: string; subtitulo?: string; children: React.ReactNode }) {
   return (
-    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
       <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
       {subtitulo && <p className="mt-0.5 text-xs text-stone-500">{subtitulo}</p>}
       <div className="mt-3">{children}</div>

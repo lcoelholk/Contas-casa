@@ -55,7 +55,7 @@ export default function Fixas() {
         {listaMembros.map((m) => {
           const t = totais.find((x) => x.membroId === m.id)!
           return (
-            <div key={m.id} className="rounded-2xl border border-stone-200 bg-white p-3 shadow-sm">
+            <div key={m.id} className="rounded-2xl border border-stone-200 bg-superficie p-3 shadow-sm">
               <p className="flex items-center gap-1.5 text-xs text-stone-500">
                 <Bolinha cor={m.cor} />
                 Fixo de {m.nome}
@@ -70,7 +70,7 @@ export default function Fixas() {
       </div>
 
       {grupos.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-stone-300 bg-white p-5 text-center text-sm text-stone-600">
+        <div className="rounded-2xl border border-dashed border-stone-300 bg-superficie p-5 text-center text-sm text-stone-600">
           <p className="font-medium text-stone-900">Nenhuma conta fixa ainda</p>
           <p className="mt-1">
             Cadastre uma vez e ela aparece sozinha todo mês: aluguel, luz e internet na Casa; academia ou salário na aba
@@ -160,7 +160,7 @@ function GrupoDaConta({
 }) {
   const totalSaidas = fixas.filter((f) => f.recorrente.tipo === 'saida').reduce((s, f) => s + f.total, 0)
   return (
-    <section aria-label={conta.nome} className="rounded-2xl border border-stone-200 bg-white px-4 pt-4 pb-1 shadow-sm">
+    <section aria-label={conta.nome} className="rounded-2xl border border-stone-200 bg-superficie px-4 pt-4 pb-1 shadow-sm">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="flex items-center gap-2 text-sm font-semibold tracking-wide text-stone-500 uppercase">
           <Bolinha cor={conta.cor} />
@@ -231,7 +231,7 @@ function ListaSimples({
   children: (r: Recorrente) => string
 }) {
   return (
-    <details className="rounded-2xl border border-stone-200 bg-white px-4 py-3 text-sm shadow-sm">
+    <details className="rounded-2xl border border-stone-200 bg-superficie px-4 py-3 text-sm shadow-sm">
       <summary className="cursor-pointer font-medium text-stone-600">
         {titulo} ({itens.length})
       </summary>

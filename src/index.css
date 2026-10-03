@@ -1,12 +1,85 @@
 @import "tailwindcss";
 
+/* dark: vale quando o <html> tem a classe "dark" (automático ou escolhido em Ajustes) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-marca-50: #f0fdfa;
   --color-marca-100: #ccfbf1;
   --color-marca-500: #14b8a6;
-  --color-marca-600: #0d9488;
-  --color-marca-700: #0f766e;
+  /* 600: botões com letra branca (contraste >= 4,5) */
+  --color-marca-600: #0f766e;
+  --color-marca-700: #115e59;
   --color-marca-900: #134e4a;
+
+  /* Mais escuros que o padrão do Tailwind para letra branca e textos secundários legíveis */
+  --color-stone-500: #6c655f;
+  --color-amber-600: #b45309;
+  --color-emerald-600: #047857;
+
+  /* Fundo dos cartões, painéis e barras (branco no claro) */
+  --color-superficie: #ffffff;
+
+  /* Séries dos gráficos (paleta validada para daltonismo em cada tema) */
+  --color-serie-1: #2a78d6;
+  --color-serie-2: #eb6834;
+  --color-serie-3: #1baf7a;
+}
+
+/*
+ * Tema escuro: a classe "dark" no <html> (ver src/lib/tema.ts) troca os valores
+ * das cores usadas no app. As telas usam as mesmas classes nos dois temas:
+ * a escala de cinza (stone) inverte, os tons claros de aviso viram tons escuros
+ * e os textos coloridos ficam mais claros para ler no fundo escuro.
+ */
+html.dark {
+  color-scheme: dark;
+
+  --color-superficie: #1c1917;
+
+  --color-stone-50: #0c0a09;
+  --color-stone-100: #26221f;
+  --color-stone-200: #34302c;
+  --color-stone-300: #4a4540;
+  --color-stone-400: #78716c;
+  --color-stone-500: #a8a29e;
+  --color-stone-600: #c4bfba;
+  --color-stone-700: #d6d3d1;
+  --color-stone-800: #e7e5e4;
+  --color-stone-900: #f5f5f4;
+  --color-stone-950: #fafaf9;
+
+  --color-marca-50: #0b2b29;
+  --color-marca-100: #134e4a;
+  --color-marca-700: #5eead4;
+  --color-marca-900: #ccfbf1;
+
+  --color-red-50: #2a1212;
+  --color-red-200: #5b2121;
+  --color-red-700: #f87171;
+  --color-red-800: #fca5a5;
+  --color-red-900: #fecaca;
+
+  --color-amber-50: #2a1f0a;
+  --color-amber-200: #5c4512;
+  --color-amber-700: #fbbf24;
+  --color-amber-800: #fcd34d;
+  --color-amber-900: #fde68a;
+  --color-amber-950: #fef3c7;
+
+  --color-emerald-50: #0b2a1d;
+  --color-emerald-200: #14532d;
+  --color-emerald-700: #34d399;
+  --color-emerald-900: #a7f3d0;
+
+  --color-sky-100: #0c2a3d;
+  --color-sky-800: #7dd3fc;
+  --color-rose-100: #3b0d1a;
+  --color-rose-800: #fda4af;
+
+  --color-serie-1: #3987e5;
+  --color-serie-2: #d95926;
+  --color-serie-3: #199e70;
 }
 
 html {

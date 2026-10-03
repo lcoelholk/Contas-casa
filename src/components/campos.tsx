@@ -2,7 +2,7 @@ import type { ReactNode } from 'react'
 import type { Categoria, TipoMovimento } from '../types/banco.ts'
 
 export const classeInput =
-  'h-12 w-full rounded-xl border border-stone-300 bg-white px-3 text-base outline-none focus:border-marca-600 focus:ring-2 focus:ring-marca-100'
+  'h-12 w-full rounded-xl border border-stone-300 bg-superficie px-3 text-base outline-none focus:border-marca-600 focus:ring-2 focus:ring-marca-100'
 
 export function Campo({ rotulo, children, dica }: { rotulo: string; children: ReactNode; dica?: string }) {
   return (
@@ -93,7 +93,7 @@ export function Segmentado<T extends string>({
           aria-checked={valor === o.valor}
           onClick={() => onChange(o.valor)}
           className={`min-h-10 flex-1 rounded-lg px-3 text-sm font-medium whitespace-nowrap transition-colors ${
-            valor === o.valor ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-600'
+            valor === o.valor ? 'bg-superficie text-stone-900 shadow-sm dark:bg-stone-300' : 'text-stone-600'
           }`}
         >
           {o.texto}
@@ -194,7 +194,7 @@ export function SeletorCor({
           aria-label={cor}
           onClick={() => onChange(cor)}
           className={`size-10 rounded-full border-4 transition-transform ${
-            valor === cor ? 'scale-110 border-stone-900' : 'border-white shadow-sm'
+            valor === cor ? 'scale-110 border-stone-900' : 'border-superficie shadow-sm'
           }`}
           style={{ backgroundColor: cor }}
         />

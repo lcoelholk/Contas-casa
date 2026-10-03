@@ -14,6 +14,7 @@ import { Folha } from '../components/Folha.tsx'
 import { FormConta } from '../components/FormConta.tsx'
 import { BotoesFormulario, Campo, ErroFormulario, Segmentado, SeletorCor, classeInput } from '../components/campos.tsx'
 import type { Categoria, Conta, Membro, TipoMovimento } from '../types/banco.ts'
+import { lerPreferencia, salvarPreferencia, type PreferenciaTema } from '../lib/tema.ts'
 
 export default function Configuracoes() {
   const contas = useTodasContas()
@@ -26,6 +27,7 @@ export default function Configuracoes() {
   return (
     <div className="flex flex-col gap-4">
       <h1 className="text-lg font-semibold">Ajustes</h1>
+      <SecaoAparencia />
       <SecaoContas contas={contas.data ?? []} membros={membros.data ?? []} />
       <SecaoPessoas membros={membros.data ?? []} />
       <SecaoCategorias categorias={categorias.data ?? []} />
@@ -35,7 +37,7 @@ export default function Configuracoes() {
 
 function Bloco({ titulo, children, acao }: { titulo: string; children: ReactNode; acao?: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-stone-200 bg-white px-4 pt-4 pb-3 shadow-sm">
+    <section className="rounded-2xl border border-stone-200 bg-superficie px-4 pt-4 pb-3 shadow-sm">
       <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
       {children}
       {acao}
@@ -57,6 +59,36 @@ function BotaoNovo({ texto, onClick }: { texto: string; onClick: () => void }) {
 
 const classeSeta =
   'flex size-10 items-center justify-center rounded-lg text-stone-500 hover:bg-stone-100 disabled:opacity-30 disabled:hover:bg-transparent'
+
+// --- Aparência ---
+
+function SecaoAparencia() {
+  const [tema, setTema] = useState<PreferenciaTema>(lerPreferencia)
+  return (
+    <Bloco titulo="Aparência">
+      <div className="mt-3 flex flex-col gap-2">
+        <Segmentado
+          rotulo="Tema"
+          valor={tema}
+          onChange={(t) => {
+            setTema(t)
+            salvarPreferencia(t)
+          }}
+          opcoes={[
+            { valor: 'automatico', texto: 'Automático' },
+            { valor: 'claro', texto: 'Claro' },
+            { valor: 'escuro', texto: 'Escuro' },
+          ]}
+        />
+        <p className="text-sm text-stone-600">
+          {tema === 'automatico'
+            ? 'Segue o tema do celular: escuro quando ele estiver escuro, claro quando estiver claro.'
+            : `Sempre ${tema}, mesmo se o celular mudar. Vale só neste aparelho.`}
+        </p>
+      </div>
+    </Bloco>
+  )
+}
 
 // --- Abas ---
 

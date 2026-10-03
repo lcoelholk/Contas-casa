@@ -131,7 +131,13 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 - **Limite de gastos:** limite mensal por categoria, de uma pessoa ou dos dois somados. Barra com status (dentro, perto a partir de 80%, passou). Os limites perto ou acima aparecem também no Resumo.
 - Guardar dinheiro numa meta **não** vira lançamento: é só um registro do quanto foi separado.
 
+### Tema claro/escuro e legibilidade
+- **Padrão: segue o celular** (automático). Em Ajustes → Aparência: Automático, Claro ou Escuro, guardado no aparelho (`src/lib/tema.ts`; o `index.html` aplica antes de desenhar para não piscar)
+- Escuro = classe `dark` no `<html>`; `src/index.css` troca os valores das cores (cinzas invertidos, tons de aviso escuros, textos coloridos mais claros, séries dos gráficos validadas para o fundo escuro). As telas usam as mesmas classes; fundo de cartão é `bg-superficie` (nunca `bg-white`). Para ajuste só no escuro: `dark:`
+- **Contraste mínimo 4,5:1** para texto nos dois temas: texto secundário é `text-stone-500` ou mais forte (nada de `text-stone-400` em texto); botões com letra branca usam `marca-600`, `red-600`, `amber-600` ou `emerald-600` (escurecidos no `@theme`); letra mínima 11px
+
 ### Configurações (tela "Ajustes")
+- Aparência: tema automático, claro ou escuro
 - Contas: criar, editar, reordenar (↑ ↓), arquivar e desarquivar
 - Categorias: criar, renomear, trocar ícone, arquivar e desarquivar. Arquivada some dos formulários, mas os lançamentos antigos continuam com ela.
 - Nome e cor de cada membro

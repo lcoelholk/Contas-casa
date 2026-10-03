@@ -25,7 +25,7 @@ export function CheckPago({
       aria-checked={pago}
       aria-label={rotulo}
       className={`flex ${medida} shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
-        pago ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-stone-300 bg-white text-transparent hover:border-emerald-500'
+        pago ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-stone-300 bg-superficie text-transparent hover:border-emerald-500'
       }`}
     >
       <svg viewBox="0 0 16 16" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
@@ -43,7 +43,7 @@ function TextoVencimento({ l, hoje }: { l: Pick<Lancamento, 'tipo' | 'pago' | 'v
     atrasado: ['text-red-700 font-medium', `venceu ${dia}`],
     hoje: ['text-amber-700 font-medium', 'vence hoje'],
     'em-breve': ['text-amber-700', `vence ${dia}`],
-    pago: ['text-stone-400', `venc. ${dia}`],
+    pago: ['text-stone-500', `venc. ${dia}`],
     normal: ['text-stone-500', l.tipo === 'entrada' ? `previsto ${dia}` : `vence ${dia}`],
   }
   const [classe, texto] = estilos[status] ?? estilos.normal
@@ -92,7 +92,7 @@ export function ItemLancamento({
       />
       <button type="button" onClick={onAbrir} className="flex min-w-0 flex-1 items-center gap-3 text-left">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className={`truncate font-medium ${l.pago && !entrada ? 'text-stone-400' : ''}`}>{l.descricao}</span>
+          <span className={`truncate font-medium ${l.pago && !entrada ? 'text-stone-500' : ''}`}>{l.descricao}</span>
           <Detalhes
             partes={[
               categoria && `${categoria.icone ?? ''} ${categoria.nome}`.trim(),
@@ -103,7 +103,7 @@ export function ItemLancamento({
         </span>
         <span
           className={`shrink-0 font-semibold tabular-nums ${
-            entrada ? 'text-emerald-700' : l.pago ? 'text-stone-400' : ''
+            entrada ? 'text-emerald-700' : l.pago ? 'text-stone-500' : ''
           }`}
         >
           {entrada ? '+' : ''}
@@ -140,7 +140,7 @@ export function ItemGrupo({
     <li className="py-3">
       <button type="button" onClick={onAbrir} className="flex w-full items-start gap-3 text-left">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-          <span className={`truncate font-medium ${todosPagos ? 'text-stone-400' : ''}`}>{base.descricao}</span>
+          <span className={`truncate font-medium ${todosPagos ? 'text-stone-500' : ''}`}>{base.descricao}</span>
           <Detalhes
             partes={[
               categoria && `${categoria.icone ?? ''} ${categoria.nome}`.trim(),
@@ -149,7 +149,7 @@ export function ItemGrupo({
             ]}
           />
         </span>
-        <span className={`shrink-0 font-semibold tabular-nums ${todosPagos ? 'text-stone-400' : ''}`}>
+        <span className={`shrink-0 font-semibold tabular-nums ${todosPagos ? 'text-stone-500' : ''}`}>
           {formatarCentavos(total)}
         </span>
       </button>
@@ -167,7 +167,7 @@ export function ItemGrupo({
               />
               <Bolinha cor={m.cor} />
               <span className="flex-1">{m.nome}</span>
-              <span className={`tabular-nums ${l!.pago ? 'text-stone-400' : ''}`}>
+              <span className={`tabular-nums ${l!.pago ? 'text-stone-500' : ''}`}>
                 {formatarCentavos(l!.valor_centavos)}
               </span>
             </li>
@@ -189,7 +189,7 @@ function Numero({ rotulo, valor, destaque }: { rotulo: string; valor: number; de
 /** Números do mês de uma pessoa */
 export function PainelTotais({ totais }: { totais: Totais }) {
   return (
-    <section aria-label="Totais do mês" className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+    <section aria-label="Totais do mês" className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
       <div className="grid grid-cols-3 gap-2">
         <Numero rotulo="A pagar" valor={totais.saidas} />
         <Numero rotulo="Pago" valor={totais.pago} destaque="text-emerald-700" />
@@ -218,7 +218,7 @@ export function PainelTotaisCompartilhada({
   porMembro: { membro: Membro; valor: number }[]
 }) {
   return (
-    <section aria-label="Totais do mês" className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+    <section aria-label="Totais do mês" className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
       <div className="grid grid-cols-2 gap-2">
         <Numero rotulo="Total do mês" valor={total} />
         <Numero rotulo="Pendente" valor={pendente} destaque={pendente > 0 ? 'text-amber-700' : ''} />

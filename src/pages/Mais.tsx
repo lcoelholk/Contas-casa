@@ -59,7 +59,7 @@ export default function Mais() {
       <button
         type="button"
         onClick={sair}
-        className="h-12 rounded-2xl border border-stone-200 bg-white font-medium text-red-700 shadow-sm hover:bg-red-50"
+        className="h-12 rounded-2xl border border-stone-200 bg-superficie font-medium text-red-700 shadow-sm hover:bg-red-50"
       >
         Sair{eu ? ` (${eu.nome})` : ''}
       </button>
@@ -77,7 +77,7 @@ export default function Mais() {
 
 function Grupo({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
-    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-white px-4 pt-3 pb-1 shadow-sm">
+    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-superficie px-4 pt-3 pb-1 shadow-sm">
       <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
       <ul className="divide-y divide-stone-100">{children}</ul>
     </section>
@@ -96,7 +96,7 @@ function Conteudo({ icone, titulo, detalhe }: { icone: ReactNode; titulo: string
         <span className="font-medium">{titulo}</span>
         <span className="truncate text-xs text-stone-500">{detalhe}</span>
       </span>
-      <span aria-hidden className="text-stone-400">
+      <span aria-hidden className="text-stone-500">
         ›
       </span>
     </>

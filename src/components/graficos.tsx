@@ -8,7 +8,8 @@ import { formatarCentavos, formatarCentavosCurto } from '../lib/dinheiro.ts'
  */
 
 /** Cores das séries (ordem fixa; validadas para daltonismo) */
-export const CORES_SERIES = ['#2a78d6', '#eb6834', '#1baf7a'] as const
+/** Cores das séries: variáveis do tema (claro/escuro), ordem fixa */
+export const CORES_SERIES = ['var(--color-serie-1)', 'var(--color-serie-2)', 'var(--color-serie-3)'] as const
 
 export type Serie = { nome: string; cor: string; valores: number[] }
 
@@ -124,13 +125,13 @@ export function GraficoColunas({
           <svg width={largura} height={altura} role="img" aria-label={titulo} className="block overflow-visible">
             {ticks.map((t) => (
               <g key={t}>
-                <line x1={margemEsq} x2={largura} y1={yDe(t)} y2={yDe(t)} stroke="#e7e5e4" strokeWidth={1} />
+                <line x1={margemEsq} x2={largura} y1={yDe(t)} y2={yDe(t)} style={{ stroke: 'var(--color-stone-200)' }} strokeWidth={1} />
                 <text
                   x={margemEsq - 6}
                   y={yDe(t)}
                   dy="0.32em"
                   textAnchor="end"
-                  className="fill-stone-500 text-[10px] tabular-nums"
+                  className="fill-stone-500 text-[11px] tabular-nums"
                 >
                   {formatarCentavosCurto(t)}
                 </text>
@@ -152,20 +153,20 @@ export function GraficoColunas({
                       // 2px de respiro entre os segmentos
                       const h = Math.max(0, yBase - yTopo - (k > 0 ? 2 : 0))
                       return ehTopo ? (
-                        <path key={s.nome} d={caminhoBarra(x0, yTopo, larguraBarra, h)} fill={s.cor} />
+                        <path key={s.nome} d={caminhoBarra(x0, yTopo, larguraBarra, h)} style={{ fill: s.cor }} />
                       ) : (
-                        <rect key={s.nome} x={x0} y={yTopo} width={larguraBarra} height={h} fill={s.cor} />
+                        <rect key={s.nome} x={x0} y={yTopo} width={larguraBarra} height={h} style={{ fill: s.cor }} />
                       )
                     }
                     const x = x0 + k * (larguraBarra + 2)
-                    return <path key={s.nome} d={caminhoBarra(x, yDe(v), larguraBarra, yDe(0) - yDe(v))} fill={s.cor} />
+                    return <path key={s.nome} d={caminhoBarra(x, yDe(v), larguraBarra, yDe(0) - yDe(v))} style={{ fill: s.cor }} />
                   })}
                   {mostraRotulo(i) && (
                     <text
                       x={margemEsq + i * banda + banda / 2}
                       y={altura - 6}
                       textAnchor="middle"
-                      className={`text-[11px] ${destaque === i ? 'fill-stone-900 font-semibold' : 'fill-stone-500'}`}
+                      className={`text-xs ${destaque === i ? 'fill-stone-900 font-semibold' : 'fill-stone-500'}`}
                     >
                       {rotulo}
                     </text>
@@ -191,7 +192,7 @@ export function GraficoColunas({
                 </g>
               )
             })}
-            <line x1={margemEsq} x2={largura} y1={yDe(0)} y2={yDe(0)} stroke="#a8a29e" strokeWidth={1} />
+            <line x1={margemEsq} x2={largura} y1={yDe(0)} y2={yDe(0)} style={{ stroke: 'var(--color-stone-400)' }} strokeWidth={1} />
           </svg>
         )}
         {ativo !== null && largura > 0 && (
@@ -228,7 +229,7 @@ export function Dica({
   return (
     <div
       role="status"
-      className="pointer-events-none absolute -top-2 z-10 w-max max-w-64 min-w-40 -translate-x-1/2 -translate-y-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs shadow-lg"
+      className="pointer-events-none absolute -top-2 z-10 w-max max-w-64 min-w-40 -translate-x-1/2 -translate-y-full rounded-xl border border-stone-200 bg-superficie px-3 py-2 text-xs shadow-lg"
       style={{ left: x }}
     >
       <p className="mb-1 font-medium text-stone-500">{titulo}</p>
@@ -304,7 +305,7 @@ export function Indicador({
   tom?: 'neutro' | 'bom' | 'ruim'
 }) {
   return (
-    <div className="rounded-2xl border border-stone-200 bg-white p-3 shadow-sm">
+    <div className="rounded-2xl border border-stone-200 bg-superficie p-3 shadow-sm">
       <p className="text-xs text-stone-500">{rotulo}</p>
       <p className="mt-0.5 text-xl font-semibold tracking-tight">{valor}</p>
       {detalhe && (
@@ -402,20 +403,20 @@ export function GraficoLinhas({
           >
             {ticks.map((t) => (
               <g key={t}>
-                <line x1={margemEsq} x2={largura - 8} y1={yDe(t)} y2={yDe(t)} stroke="#e7e5e4" strokeWidth={1} />
+                <line x1={margemEsq} x2={largura - 8} y1={yDe(t)} y2={yDe(t)} style={{ stroke: 'var(--color-stone-200)' }} strokeWidth={1} />
                 <text
                   x={margemEsq - 6}
                   y={yDe(t)}
                   dy="0.32em"
                   textAnchor="end"
-                  className="fill-stone-500 text-[10px] tabular-nums"
+                  className="fill-stone-500 text-[11px] tabular-nums"
                 >
                   {formatarCentavosCurto(t)}
                 </text>
               </g>
             ))}
             {marcasX.map((i) => (
-              <text key={i} x={xDe(i)} y={altura - 6} textAnchor="middle" className="fill-stone-500 text-[11px]">
+              <text key={i} x={xDe(i)} y={altura - 6} textAnchor="middle" className="fill-stone-500 text-xs">
                 {rotuloX(i)}
               </text>
             ))}
@@ -425,7 +426,7 @@ export function GraficoLinhas({
                 x2={xDe(ativo)}
                 y1={margemTopo}
                 y2={margemTopo + areaH}
-                stroke="#a8a29e"
+                style={{ stroke: 'var(--color-stone-400)' }}
                 strokeWidth={1}
               />
             )}
@@ -435,7 +436,7 @@ export function GraficoLinhas({
                 key={s.nome}
                 d={caminho(s.valores)}
                 fill="none"
-                stroke={s.cor}
+                style={{ stroke: s.cor }}
                 strokeWidth={2}
                 strokeLinejoin="round"
                 strokeLinecap="round"
@@ -445,7 +446,7 @@ export function GraficoLinhas({
               const i = ativo ?? (k === 0 ? s.valores.findLastIndex((v) => v !== null) : -1)
               const v = i >= 0 ? s.valores[i] : null
               if (v === null || v === undefined) return null
-              return <circle key={s.nome} cx={xDe(i)} cy={yDe(v)} r={4} fill={s.cor} stroke="#fff" strokeWidth={2} />
+              return <circle key={s.nome} cx={xDe(i)} cy={yDe(v)} r={4} style={{ fill: s.cor, stroke: 'var(--color-superficie)' }} strokeWidth={2} />
             })}
           </svg>
         )}
@@ -497,7 +498,7 @@ export function MapaDeCalor({
 
   return (
     <figure aria-label={titulo} className="flex flex-col gap-2">
-      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-stone-500">
+      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-medium text-stone-500">
         {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
           <span key={i}>{d}</span>
         ))}
@@ -514,13 +515,13 @@ export function MapaDeCalor({
               aria-pressed={ativo === i}
               onClick={() => setAtivo(ativo === i ? null : i)}
               onPointerEnter={(e) => e.pointerType === 'mouse' && setAtivo(i)}
-              className={`flex aspect-square items-center justify-center rounded-md text-[11px] tabular-nums transition-transform ${
+              className={`flex aspect-square items-center justify-center rounded-md text-xs tabular-nums transition-transform ${
                 ativo === i ? 'scale-110 ring-2 ring-stone-900' : ''
               } ${diaDestaque === i + 1 ? 'font-bold' : ''}`}
               style={{
                 backgroundColor:
-                  tomDoCalor(valores[i], maior) === 0 ? '#f5f5f4' : TONS_CALOR[tomDoCalor(valores[i], maior) - 1],
-                color: tomDoCalor(valores[i], maior) >= 3 ? '#fff' : '#57534e',
+                  tomDoCalor(valores[i], maior) === 0 ? 'var(--color-stone-100)' : TONS_CALOR[tomDoCalor(valores[i], maior) - 1],
+                color: tomDoCalor(valores[i], maior) >= 3 ? '#fff' : tomDoCalor(valores[i], maior) === 0 ? 'var(--color-stone-600)' : '#134e4a',
               }}
             >
               {i + 1}
@@ -538,7 +539,7 @@ export function MapaDeCalor({
         </span>
         <span className="flex items-center gap-1" aria-hidden>
           Menos
-          {['#f5f5f4', ...TONS_CALOR].map((c) => (
+          {['var(--color-stone-100)', ...TONS_CALOR].map((c) => (
             <span key={c} className="inline-block size-3 rounded-sm" style={{ backgroundColor: c }} />
           ))}
           Mais
