@@ -63,12 +63,22 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 - Interface em português, pensada primeiro para celular
 - Valores em reais, formatados com `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`
 
-### Resumo do mês (tela inicial)
-- Card por membro: total a pagar no mês, quanto já foi pago, quanto está pendente, total de entradas e saldo (entradas − saídas)
-- Card da Casa: total do mês e quanto cada um está pagando
-- Lista **"Vence nos próximos 7 dias"** (não pagos, dos dois)
-- Lista de **atrasados** (vencimento passado e não pago)
-- Gastos por categoria no mês (lista com barras simples)
+### Visão geral (tela inicial, antigo "Resumo")
+- Filtro de pessoa no topo (os dois, Lucas, Emillia) para os blocos de análise
+- **Como está o mês:** frase comparando o gasto até hoje com o mesmo ponto do mês passado, gasto até hoje, variação % e maior categoria
+- **Ritmo de gastos:** linha do gasto acumulado dia a dia, este mês vs mês passado
+- Lista **"Vence nos próximos 7 dias"** e **atrasados** (não pagos, dos dois)
+- Card por membro (a pagar, pago, pendente, entradas, saldo) e card de cada conta compartilhada
+- Aviso de limite de gastos perto ou estourado
+- **Mapa de calor:** calendário do mês com a cor de cada dia pelo quanto foi gasto
+- **Transações recentes** (últimas lançadas no mês) e **principais categorias** vs mês anterior
+- "Data" de um lançamento (para ritmo, mapa e listas) = vencimento, senão quando foi pago, senão quando foi lançado; fora do mês da competência vira o dia 1 (`dataDoLancamento` em `src/lib/visaoGeral.ts`)
+
+### Transações (tela "Transações")
+- Todas as linhas do período (mês do seletor ou últimos 3/6/12 meses), com busca (sem acento) e filtros: pessoa, conta, tipo, situação, categoria e ordem
+- Totais do que está filtrado: quantidade, gastos, entradas e saldo
+- Marcar pago direto na lista; tocar abre a aba da conta no mês certo
+- "Nova transação": escolhe a conta e abre o formulário dela
 
 ### Aba de pessoa (Lucas / Emillia)
 - Lista do mês agrupada em Pessoal e cada conta compartilhada
@@ -158,7 +168,7 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 │   │   └── datas.ts           ← competência, vencimento, fuso
 │   ├── hooks/                 ← useLancamentos, useContas, useCompetencia...
 │   ├── components/            ← UI reutilizável
-│   ├── pages/                 ← Resumo, ContaPage, Graficos, Metas, Configuracoes, Login
+│   ├── pages/                 ← Resumo (Visão geral), Transacoes, ContaPage, Graficos, Metas, Configuracoes, Login
 │   └── types/                 ← tipos gerados do banco
 ├── public/                    ← ícones do PWA
 └── .github/workflows/deploy.yml

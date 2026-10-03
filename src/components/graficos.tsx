@@ -13,7 +13,7 @@ export const CORES_SERIES = ['#2a78d6', '#eb6834', '#1baf7a'] as const
 export type Serie = { nome: string; cor: string; valores: number[] }
 
 /** Largura do elemento, atualizada quando a tela muda */
-function useLargura<T extends HTMLElement>() {
+export function useLargura<T extends HTMLElement>() {
   const ref = useRef<T>(null)
   const [largura, setLargura] = useState(0)
   useEffect(() => {
@@ -216,7 +216,7 @@ export function GraficoColunas({
 }
 
 /** Caixinha com os valores do ponto tocado */
-function Dica({
+export function Dica({
   x,
   titulo,
   linhas,
@@ -336,5 +336,214 @@ export function Medidor({ percentual, cor, rotulo }: { percentual: number; cor: 
         style={{ width: `${p}%`, backgroundColor: cor }}
       />
     </div>
+  )
+}
+
+/**
+ * Linhas acumuladas dia a dia (ex.: ritmo de gastos deste mês vs o anterior).
+ * A primeira série é a principal (cor forte, ponto no fim); as outras ficam em cinza.
+ * Valores null não são desenhados (dias que ainda não chegaram).
+ */
+export function GraficoLinhas({
+  titulo,
+  series,
+  altura = 180,
+  rotuloX = (i) => String(i + 1),
+  tituloDica = (i) => `Dia ${i + 1}`,
+}: {
+  titulo: string
+  series: { nome: string; cor: string; valores: (number | null)[] }[]
+  altura?: number
+  rotuloX?: (i: number) => string
+  tituloDica?: (i: number) => string
+}) {
+  const [ref, largura] = useLargura<HTMLDivElement>()
+  const [ativo, setAtivo] = useState<number | null>(null)
+  const n = Math.max(...series.map((s) => s.valores.length))
+  const maior = Math.max(0, ...series.flatMap((s) => s.valores.map((v) => v ?? 0)))
+  const ticks = marcasDoEixo(maior)
+  const topo = ticks[ticks.length - 1]
+  const margemEsq = 52
+  const margemTopo = 8
+  const margemBaixo = 22
+  const areaW = Math.max(0, largura - margemEsq - 8)
+  const areaH = altura - margemTopo - margemBaixo
+  const xDe = (i: number) => margemEsq + (n > 1 ? (i / (n - 1)) * areaW : 0)
+  const yDe = (v: number) => margemTopo + areaH - (v / topo) * areaH
+  const caminho = (vs: (number | null)[]) =>
+    vs.reduce<string>((d, v, i) => (v === null ? d : `${d}${d ? 'L' : 'M'}${xDe(i)},${yDe(v)}`), '')
+  const marcasX = [0, Math.round((n - 1) / 2), n - 1].filter((v, i, a) => a.indexOf(v) === i)
+
+  const indiceDo = (clientX: number, el: SVGSVGElement) => {
+    const x = clientX - el.getBoundingClientRect().left
+    return Math.max(0, Math.min(n - 1, Math.round(((x - margemEsq) / areaW) * (n - 1))))
+  }
+
+  return (
+    <figure className="flex flex-col gap-2" aria-label={titulo}>
+      <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-stone-600">
+        {series.map((s) => (
+          <li key={s.nome} className="flex items-center gap-1.5">
+            <span aria-hidden className="inline-block h-0.5 w-4 rounded" style={{ backgroundColor: s.cor }} />
+            {s.nome}
+          </li>
+        ))}
+      </ul>
+      <div ref={ref} className="relative" onPointerLeave={(e) => e.pointerType === 'mouse' && setAtivo(null)}>
+        {largura > 0 && (
+          <svg
+            width={largura}
+            height={altura}
+            role="img"
+            aria-label={titulo}
+            className="block touch-pan-y overflow-visible"
+            onPointerMove={(e) => setAtivo(indiceDo(e.clientX, e.currentTarget))}
+            onPointerDown={(e) => setAtivo(indiceDo(e.clientX, e.currentTarget))}
+          >
+            {ticks.map((t) => (
+              <g key={t}>
+                <line x1={margemEsq} x2={largura - 8} y1={yDe(t)} y2={yDe(t)} stroke="#e7e5e4" strokeWidth={1} />
+                <text
+                  x={margemEsq - 6}
+                  y={yDe(t)}
+                  dy="0.32em"
+                  textAnchor="end"
+                  className="fill-stone-500 text-[10px] tabular-nums"
+                >
+                  {formatarCentavosCurto(t)}
+                </text>
+              </g>
+            ))}
+            {marcasX.map((i) => (
+              <text key={i} x={xDe(i)} y={altura - 6} textAnchor="middle" className="fill-stone-500 text-[11px]">
+                {rotuloX(i)}
+              </text>
+            ))}
+            {ativo !== null && (
+              <line
+                x1={xDe(ativo)}
+                x2={xDe(ativo)}
+                y1={margemTopo}
+                y2={margemTopo + areaH}
+                stroke="#a8a29e"
+                strokeWidth={1}
+              />
+            )}
+            {/* As de fundo primeiro, a principal por cima */}
+            {[...series].reverse().map((s) => (
+              <path
+                key={s.nome}
+                d={caminho(s.valores)}
+                fill="none"
+                stroke={s.cor}
+                strokeWidth={2}
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+            ))}
+            {series.map((s, k) => {
+              const i = ativo ?? (k === 0 ? s.valores.findLastIndex((v) => v !== null) : -1)
+              const v = i >= 0 ? s.valores[i] : null
+              if (v === null || v === undefined) return null
+              return <circle key={s.nome} cx={xDe(i)} cy={yDe(v)} r={4} fill={s.cor} stroke="#fff" strokeWidth={2} />
+            })}
+          </svg>
+        )}
+        {ativo !== null && largura > 0 && (
+          <Dica
+            x={Math.min(Math.max(xDe(ativo), 100), largura - 100)}
+            titulo={tituloDica(ativo)}
+            linhas={series.map((s) => ({
+              cor: s.cor,
+              rotulo: s.nome,
+              valor:
+                s.valores[ativo] === null || s.valores[ativo] === undefined ? '—' : formatarCentavos(s.valores[ativo]!),
+            }))}
+          />
+        )}
+      </div>
+    </figure>
+  )
+}
+
+/** Tons de verde-água do mais claro ao mais escuro (menos → mais gasto) */
+const TONS_CALOR = ['#ccfbf1', '#5eead4', '#14b8a6', '#0f766e'] as const
+
+/** Em qual tom cai um valor: 0 = sem gasto, 1 a 4 = quartis do maior dia */
+export function tomDoCalor(valor: number, maior: number): number {
+  if (valor <= 0 || maior <= 0) return 0
+  return Math.min(4, Math.ceil((valor / maior) * 4))
+}
+
+/** Calendário do mês com a cor de cada dia pelo quanto foi gasto */
+export function MapaDeCalor({
+  titulo,
+  valores,
+  inicioSemana,
+  diaDestaque,
+}: {
+  titulo: string
+  /** Gasto de cada dia (índice 0 = dia 1) */
+  valores: number[]
+  /** Dia da semana do dia 1 (0 = domingo) */
+  inicioSemana: number
+  /** Dia de hoje, se for o mês atual */
+  diaDestaque?: number
+}) {
+  const [ativo, setAtivo] = useState<number | null>(null)
+  const maior = Math.max(0, ...valores)
+  const celulas: (number | null)[] = [...Array(inicioSemana).fill(null), ...valores.map((_, i) => i)]
+  while (celulas.length % 7) celulas.push(null)
+
+  return (
+    <figure aria-label={titulo} className="flex flex-col gap-2">
+      <div className="grid grid-cols-7 gap-1 text-center text-[10px] font-medium text-stone-500">
+        {['D', 'S', 'T', 'Q', 'Q', 'S', 'S'].map((d, i) => (
+          <span key={i}>{d}</span>
+        ))}
+      </div>
+      <div className="grid grid-cols-7 gap-1" role="grid">
+        {celulas.map((i, k) =>
+          i === null ? (
+            <span key={k} aria-hidden />
+          ) : (
+            <button
+              key={k}
+              type="button"
+              aria-label={`Dia ${i + 1}: ${formatarCentavos(valores[i])}`}
+              aria-pressed={ativo === i}
+              onClick={() => setAtivo(ativo === i ? null : i)}
+              onPointerEnter={(e) => e.pointerType === 'mouse' && setAtivo(i)}
+              className={`flex aspect-square items-center justify-center rounded-md text-[11px] tabular-nums transition-transform ${
+                ativo === i ? 'scale-110 ring-2 ring-stone-900' : ''
+              } ${diaDestaque === i + 1 ? 'font-bold' : ''}`}
+              style={{
+                backgroundColor:
+                  tomDoCalor(valores[i], maior) === 0 ? '#f5f5f4' : TONS_CALOR[tomDoCalor(valores[i], maior) - 1],
+                color: tomDoCalor(valores[i], maior) >= 3 ? '#fff' : '#57534e',
+              }}
+            >
+              {i + 1}
+            </button>
+          ),
+        )}
+      </div>
+      <div className="flex items-center justify-between text-xs text-stone-500">
+        <span className="min-h-4">
+          {ativo !== null && (
+            <>
+              Dia {ativo + 1}: <span className="font-semibold text-stone-900">{formatarCentavos(valores[ativo])}</span>
+            </>
+          )}
+        </span>
+        <span className="flex items-center gap-1" aria-hidden>
+          Menos
+          {['#f5f5f4', ...TONS_CALOR].map((c) => (
+            <span key={c} className="inline-block size-3 rounded-sm" style={{ backgroundColor: c }} />
+          ))}
+          Mais
+        </span>
+      </div>
+    </figure>
   )
 }

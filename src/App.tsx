@@ -11,6 +11,7 @@ import ContaPage from './pages/ContaPage.tsx'
 import Configuracoes from './pages/Configuracoes.tsx'
 import Graficos from './pages/Graficos.tsx'
 import Metas from './pages/Metas.tsx'
+import Transacoes from './pages/Transacoes.tsx'
 
 export default function App() {
   // Sem .env.local preenchido, mostra só a tela de configuração
@@ -33,6 +34,7 @@ export default function App() {
             <Route path="configuracoes" element={<Configuracoes />} />
             <Route path="graficos" element={<Graficos />} />
             <Route path="metas" element={<Metas />} />
+            <Route path="transacoes" element={<Transacoes />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

@@ -1,15 +1,27 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCompetencia } from '../hooks/useCompetencia.tsx'
-import { useMembros, useTodasContas } from '../hooks/useDados.ts'
+import { useMembroAtual, useMembros, useTodasContas } from '../hooks/useDados.ts'
 import { useAlertas, useCategorias, useLancamentos, useMarcarPago } from '../hooks/useLancamentos.ts'
-import { formatarDiaMes, hoje, nomeDaCompetencia } from '../lib/datas.ts'
+import {
+  competenciaAtual,
+  diaDaSemanaDoInicio,
+  diaDe,
+  formatarDiaComSemana,
+  formatarDiaMes,
+  hoje,
+  nomeCurtoDoMes,
+  nomeDaCompetencia,
+  somarMeses,
+} from '../lib/datas.ts'
+import { acumulado, comparativoCategorias, dataDoLancamento, gastoPorDia, ritmo } from '../lib/visaoGeral.ts'
+import { GraficoLinhas, MapaDeCalor } from '../components/graficos.tsx'
 import { formatarCentavos } from '../lib/dinheiro.ts'
 import { calcularTotais } from '../lib/totais.ts'
 import { contaPrincipalDe } from '../lib/contas.ts'
 import { situacoesDoMes } from '../lib/analises.ts'
 import { useOrcamentos } from '../hooks/useAnalises.ts'
-import { gastosPorCategoria, separarAlertas } from '../lib/resumo.ts'
+import { separarAlertas } from '../lib/resumo.ts'
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
 import { CheckPago } from '../components/lancamentos.tsx'
 import { Segmentado } from '../components/campos.tsx'
@@ -20,7 +32,9 @@ export default function Resumo() {
   const membros = useMembros()
   const contas = useTodasContas()
   const lancamentos = useLancamentos(competencia)
+  const anteriores = useLancamentos(somarMeses(competencia, -1))
   const categorias = useCategorias()
+  const [pessoa, setPessoa] = useState('todos')
 
   if (membros.isPending || contas.isPending || lancamentos.isPending) return <Carregando />
   if (lancamentos.isError) {
@@ -35,8 +49,24 @@ export default function Resumo() {
     (c) => c.tipo === 'compartilhada' && (!c.arquivada || todos.some((l) => l.conta_id === c.id)),
   )
 
+  const daPessoa = <T extends Lancamento>(ls: T[]) => (pessoa === 'todos' ? ls : ls.filter((l) => l.membro_id === pessoa))
+  const doMes = daPessoa(todos)
+  const doMesAnterior = daPessoa(anteriores.data ?? [])
+
   return (
     <div className="flex flex-col gap-4">
+      <Segmentado
+        rotulo="Ver de quem"
+        valor={pessoa}
+        onChange={setPessoa}
+        opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...listaMembros.map((m) => ({ valor: m.id, texto: m.nome }))]}
+      />
+      <RitmoDoMes
+        atual={doMes}
+        anterior={doMesAnterior}
+        categorias={categorias.data ?? []}
+        nome={listaMembros.find((m) => m.id === pessoa)?.nome}
+      />
       <Alertas membros={listaMembros} contas={listaContas} />
 
       <h1 className="mt-2 text-lg font-semibold">
@@ -93,7 +123,11 @@ export default function Resumo() {
 
       <AlertaLimites lancamentos={todos} categorias={categorias.data ?? []} />
 
-      <GastosPorCategoria lancamentos={todos} membros={listaMembros} categorias={categorias.data ?? []} />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <CartaoMapaDeCalor lancamentos={doMes} />
+        <TransacoesRecentes lancamentos={doMes} categorias={categorias.data ?? []} membros={listaMembros} />
+      </div>
+      <PrincipaisCategorias atual={doMes} anterior={doMesAnterior} categorias={categorias.data ?? []} />
     </div>
   )
 }
@@ -186,62 +220,6 @@ function Bloco({ titulo, tom, children }: { titulo: string; tom: 'vermelho' | 'n
   )
 }
 
-/** Barras horizontais: quanto foi gasto em cada categoria no mês */
-function GastosPorCategoria({
-  lancamentos,
-  membros,
-  categorias,
-}: {
-  lancamentos: Lancamento[]
-  membros: Membro[]
-  categorias: { id: string; nome: string; icone: string | null }[]
-}) {
-  const [filtro, setFiltro] = useState('todos')
-  const filtrados = filtro === 'todos' ? lancamentos : lancamentos.filter((l) => l.membro_id === filtro)
-  const linhas = gastosPorCategoria(filtrados, categorias)
-  const maior = linhas[0]?.total ?? 0
-
-  return (
-    <section aria-label="Gastos por categoria" className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-      <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">Gastos por categoria</h2>
-      <div className="mt-3">
-        <Segmentado
-          rotulo="Filtrar por pessoa"
-          valor={filtro}
-          onChange={setFiltro}
-          opcoes={[{ valor: 'todos', texto: 'Todos' }, ...membros.map((m) => ({ valor: m.id, texto: m.nome }))]}
-        />
-      </div>
-      {linhas.length === 0 ? (
-        <p className="mt-3 text-sm text-stone-500">Nenhum gasto neste mês.</p>
-      ) : (
-        <ul className="mt-3 flex flex-col gap-3">
-          {linhas.map((c) => (
-            <li key={c.chave}>
-              <div className="flex items-baseline justify-between gap-2 text-sm">
-                <span className="truncate">
-                  {c.icone ? `${c.icone} ` : ''}
-                  {c.nome}
-                </span>
-                <span className="shrink-0 tabular-nums">
-                  <span className="font-semibold">{formatarCentavos(c.total)}</span>
-                  <span className="ml-1.5 text-xs text-stone-500">{c.percentual}%</span>
-                </span>
-              </div>
-              <div className="mt-1 h-2 rounded-full bg-stone-100" aria-hidden>
-                <div
-                  className="h-full rounded-full bg-marca-600"
-                  style={{ width: `${maior > 0 ? Math.max(2, (c.total / maior) * 100) : 0}%` }}
-                />
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
-  )
-}
-
 /** Categorias perto ou acima do limite do mês (detalhes na tela de Metas) */
 function AlertaLimites({ lancamentos, categorias }: { lancamentos: Lancamento[]; categorias: Categoria[] }) {
   const { competencia } = useCompetencia()
@@ -323,5 +301,275 @@ function Card({
     </Link>
   ) : (
     <div className={classe}>{conteudo}</div>
+  )
+}
+
+function Painel({
+  titulo,
+  link,
+  children,
+}: {
+  titulo: string
+  link?: { texto: string; para: string }
+  children: ReactNode
+}) {
+  return (
+    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
+        {link && (
+          <Link to={link.para} className="text-sm font-medium text-marca-700">
+            {link.texto} ↗
+          </Link>
+        )}
+      </div>
+      <div className="mt-3">{children}</div>
+    </section>
+  )
+}
+
+/** "Como está o mês": gasto até hoje vs o mesmo ponto do mês passado, com a curva do mês */
+function RitmoDoMes({
+  atual,
+  anterior,
+  categorias,
+  nome,
+}: {
+  atual: Lancamento[]
+  anterior: Lancamento[]
+  categorias: Categoria[]
+  nome?: string
+}) {
+  const { competencia } = useCompetencia()
+  const { membro: eu } = useMembroAtual()
+  const ehMesAtual = competencia === competenciaAtual()
+  const ehFuturo = competencia > competenciaAtual()
+  const porDia = gastoPorDia(atual, competencia)
+  const porDiaAnterior = gastoPorDia(anterior, somarMeses(competencia, -1))
+  // No mês atual compara até hoje; em meses passados, o mês inteiro
+  const diaHoje = ehMesAtual ? diaDe(hoje()) : porDia.length
+  const r = ritmo(porDia, porDiaAnterior, diaHoje)
+  const maior = comparativoCategorias(atual, [], categorias)[0]
+  const quem = nome ?? 'vocês'
+  const mesAnterior = nomeCurtoDoMes(somarMeses(competencia, -1))
+
+  const frase =
+    r.percentual === null
+      ? r.atual === 0
+        ? 'Nenhum gasto lançado ainda neste mês.'
+        : porDiaAnterior.some((v) => v > 0)
+          ? `Até agora, ${formatarCentavos(r.atual)}. No mesmo ponto de ${mesAnterior} ainda não tinha gasto nada.`
+          : `Primeiro mês com gastos para comparar. Até agora, ${formatarCentavos(r.atual)}.`
+      : `${nome ?? 'Vocês'} ${ehMesAtual ? (nome ? 'começou' : 'começaram') : nome ? 'fechou' : 'fecharam'} o mês gastando ${Math.abs(r.percentual)}% ${
+          r.percentual <= 0 ? 'menos' : 'mais'
+        } que ${ehMesAtual ? `no mesmo ponto de ${mesAnterior}` : `em ${mesAnterior}`}.${
+          r.percentual <= -10 ? ' Bom ritmo!' : r.percentual >= 10 ? ' Vale ficar de olho.' : ''
+        }`
+
+  const acumAtual = acumulado(porDia).map((v, i) => (i < diaHoje ? v : null))
+  const acumAnterior = acumulado(porDiaAnterior)
+
+  return (
+    <section aria-label="Como está o mês" className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+      <p className="text-lg font-semibold text-marca-700">Oi, {eu?.nome ?? 'tudo bem'}! Como está o mês de {quem}?</p>
+      <p className="mt-1 text-sm text-stone-700">{ehFuturo ? 'Este mês ainda não começou: aparecem só as contas fixas e parcelas já previstas.' : frase}</p>
+
+      <div className="mt-3 grid grid-cols-3 gap-2">
+        <MiniNumero rotulo={ehMesAtual ? 'Gasto até hoje' : `Gasto em ${nomeCurtoDoMes(competencia)}`} valor={formatarCentavos(r.atual)} />
+        <MiniNumero
+          rotulo={`vs ${mesAnterior}`}
+          valor={r.percentual === null ? '—' : `${r.percentual > 0 ? '▲' : r.percentual < 0 ? '▼' : ''} ${Math.abs(r.percentual)}%`}
+          tom={r.percentual === null || r.percentual === 0 ? undefined : r.percentual < 0 ? 'text-emerald-700' : 'text-red-700'}
+        />
+        <MiniNumero
+          rotulo="Maior gasto"
+          valor={maior && maior.atual > 0 ? `${maior.icone ?? ''} ${maior.nome}` : '—'}
+          detalhe={maior && maior.atual > 0 ? formatarCentavos(maior.atual) : undefined}
+        />
+      </div>
+
+      <div className="mt-4 border-t border-stone-100 pt-3">
+        <div className="mb-2 flex items-baseline justify-between gap-2">
+          <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">Ritmo de gastos</h2>
+          {r.percentual !== null && (
+            <span className="text-xs text-stone-500">
+              {formatarCentavos(Math.abs(r.diferenca))} {r.diferenca <= 0 ? 'abaixo' : 'acima'} de {mesAnterior}
+            </span>
+          )}
+        </div>
+        <GraficoLinhas
+          titulo="Gasto acumulado dia a dia: este mês e o mês passado"
+          tituloDica={(i) => `Até o dia ${i + 1}`}
+          series={[
+            { nome: 'Este mês', cor: '#0d9488', valores: acumAtual },
+            { nome: 'Mês passado', cor: '#a8a29e', valores: acumAnterior },
+          ]}
+        />
+      </div>
+    </section>
+  )
+}
+
+function MiniNumero({ rotulo, valor, detalhe, tom }: { rotulo: string; valor: string; detalhe?: string; tom?: string }) {
+  return (
+    <div className="min-w-0 rounded-xl bg-stone-50 p-2.5">
+      <p className="text-[11px] leading-tight font-medium text-stone-500 uppercase">{rotulo}</p>
+      <p className={`mt-1 truncate text-sm font-semibold ${tom ?? 'text-stone-900'}`}>{valor}</p>
+      {detalhe && <p className="truncate text-xs text-stone-500">{detalhe}</p>}
+    </div>
+  )
+}
+
+function CartaoMapaDeCalor({ lancamentos }: { lancamentos: Lancamento[] }) {
+  const { competencia } = useCompetencia()
+  const porDia = gastoPorDia(lancamentos, competencia)
+  const total = porDia.reduce((s, v) => s + v, 0)
+  const ehMesAtual = competencia === competenciaAtual()
+  const diasPassados = ehMesAtual ? diaDe(hoje()) : porDia.length
+  const maior = porDia.reduce((m, v, i) => (v > porDia[m] ? i : m), 0)
+
+  return (
+    <Painel titulo="Mapa de calor" link={{ texto: 'ver gráficos', para: '/graficos' }}>
+      <p className="text-2xl font-semibold tracking-tight">{formatarCentavos(total)}</p>
+      <p className="mb-3 text-xs text-stone-500">
+        Média por dia: <span className="font-semibold text-stone-900">{formatarCentavos(Math.round(total / Math.max(1, diasPassados)))}</span>
+        {porDia[maior] > 0 && (
+          <>
+            {' · '}maior gasto no dia {maior + 1} ({formatarCentavos(porDia[maior])})
+          </>
+        )}
+      </p>
+      <MapaDeCalor
+        titulo="Gasto de cada dia do mês"
+        valores={porDia}
+        inicioSemana={diaDaSemanaDoInicio(competencia)}
+        diaDestaque={ehMesAtual ? diaDe(hoje()) : undefined}
+      />
+    </Painel>
+  )
+}
+
+function TransacoesRecentes({
+  lancamentos,
+  categorias,
+  membros,
+}: {
+  lancamentos: Lancamento[]
+  categorias: Categoria[]
+  membros: Membro[]
+}) {
+  const recentes = [...lancamentos].sort((a, b) => (a.criado_em < b.criado_em ? 1 : -1)).slice(0, 6)
+  const porData = new Map<string, Lancamento[]>()
+  for (const l of [...recentes].sort((a, b) => (dataDoLancamento(a) < dataDoLancamento(b) ? 1 : -1))) {
+    const d = dataDoLancamento(l)
+    porData.set(d, [...(porData.get(d) ?? []), l])
+  }
+  return (
+    <Painel titulo="Transações recentes" link={{ texto: 'ver todas', para: '/transacoes' }}>
+      {recentes.length === 0 ? (
+        <p className="text-sm text-stone-500">Nenhuma transação neste mês.</p>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {[...porData.entries()].map(([data, ls]) => (
+            <div key={data}>
+              <p className="text-xs font-medium text-stone-500 uppercase">{formatarDiaComSemana(data)}</p>
+              <ul>
+                {ls.map((l) => {
+                  const cat = categorias.find((c) => c.id === l.categoria_id)
+                  const membro = membros.find((m) => m.id === l.membro_id)
+                  return (
+                    <li key={l.id} className="flex items-center gap-2 py-1.5">
+                      <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-stone-100">
+                        {cat?.icone ?? (l.tipo === 'entrada' ? '💰' : '•')}
+                      </span>
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span className="truncate text-sm font-medium">{l.descricao}</span>
+                        <span className="truncate text-xs text-stone-500">
+                          {cat?.nome ?? 'Sem categoria'} · {membro?.nome}
+                        </span>
+                      </span>
+                      <span
+                        className={`shrink-0 text-sm font-semibold tabular-nums ${l.tipo === 'entrada' ? 'text-emerald-700' : ''}`}
+                      >
+                        {l.tipo === 'entrada' ? '+' : '−'}
+                        {formatarCentavos(l.valor_centavos)}
+                      </span>
+                    </li>
+                  )
+                })}
+              </ul>
+            </div>
+          ))}
+        </div>
+      )}
+    </Painel>
+  )
+}
+
+/** Tabela: cada categoria neste mês e no anterior */
+function PrincipaisCategorias({
+  atual,
+  anterior,
+  categorias,
+}: {
+  atual: Lancamento[]
+  anterior: Lancamento[]
+  categorias: Categoria[]
+}) {
+  const { competencia } = useCompetencia()
+  const linhas = comparativoCategorias(atual, anterior, categorias).filter((c) => c.atual > 0).slice(0, 8)
+  const maior = Math.max(0, ...linhas.map((c) => Math.max(c.atual, c.anterior)))
+  const mesAnterior = nomeCurtoDoMes(somarMeses(competencia, -1))
+
+  return (
+    <Painel titulo="Principais categorias" link={{ texto: 'ver mais', para: '/graficos' }}>
+      {linhas.length === 0 ? (
+        <p className="text-sm text-stone-500">Nenhum gasto neste mês.</p>
+      ) : (
+        <>
+          <ul className="flex flex-col gap-3">
+            {linhas.map((c) => (
+              <li key={c.chave}>
+                <div className="flex items-baseline justify-between gap-2 text-sm">
+                  <span className="min-w-0 truncate">
+                    {c.icone ? `${c.icone} ` : ''}
+                    {c.nome}
+                  </span>
+                  <span className="shrink-0 font-semibold tabular-nums">{formatarCentavos(c.atual)}</span>
+                </div>
+                {/* Barra cheia = este mês; tracinho = onde estava no mês anterior */}
+                <div className="relative mt-1 h-2 rounded-full bg-stone-100" aria-hidden>
+                  <div
+                    className="h-full rounded-full bg-marca-600"
+                    style={{ width: `${maior > 0 ? Math.max(2, (c.atual / maior) * 100) : 0}%` }}
+                  />
+                  {c.anterior > 0 && (
+                    <div
+                      className="absolute -top-0.5 h-3 w-0.5 rounded bg-stone-500"
+                      style={{ left: `calc(${(c.anterior / maior) * 100}% - 1px)` }}
+                    />
+                  )}
+                </div>
+                <p className="mt-0.5 text-xs text-stone-500">
+                  {c.variacao === null ? (
+                    `nada em ${mesAnterior}`
+                  ) : (
+                    <>
+                      <span className={c.variacao > 0 ? 'text-red-700' : c.variacao < 0 ? 'text-emerald-700' : ''}>
+                        {c.variacao > 0 ? '▲' : c.variacao < 0 ? '▼' : ''} {Math.abs(c.variacao)}%
+                      </span>{' '}
+                      vs {formatarCentavos(c.anterior)} em {mesAnterior}
+                    </>
+                  )}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-3 flex items-center gap-1.5 text-xs text-stone-500">
+            <span aria-hidden className="inline-block h-3 w-0.5 rounded bg-stone-500" /> = quanto foi em {mesAnterior}
+          </p>
+        </>
+      )}
+    </Painel>
   )
 }

@@ -53,7 +53,10 @@ export function Layout() {
 
           <nav aria-label="Abas" className="-mx-4 mt-1 flex gap-1 overflow-x-auto px-4 pb-3 [scrollbar-width:none]">
             <NavLink to="/" end className={classeAba}>
-              Resumo
+              Visão geral
+            </NavLink>
+            <NavLink to="/transacoes" className={classeAba}>
+              Transações
             </NavLink>
             <NavLink to="/graficos" className={classeAba}>
               Gráficos
