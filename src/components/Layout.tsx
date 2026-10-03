@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth.tsx'
 import { useContas, useMembroAtual, useMembros, useTodasContas } from '../hooks/useDados.ts'
+import { useTempoReal } from '../hooks/useTempoReal.ts'
 import { SeletorMes } from './SeletorMes.tsx'
 import { FormConta } from './FormConta.tsx'
 import { Bolinha } from './ui.tsx'
@@ -19,6 +20,7 @@ export function Layout() {
   const membros = useMembros()
   const navigate = useNavigate()
   const [criandoConta, setCriandoConta] = useState(false)
+  useTempoReal(Boolean(membro))
 
   return (
     <div className="flex min-h-dvh flex-col">

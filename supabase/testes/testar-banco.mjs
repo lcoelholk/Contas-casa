@@ -336,6 +336,17 @@ await deveFalhar(`insert into contas (nome, tipo) values ('Invasão', 'compartil
 ok((await q(`update categorias set nome = 'x' returning id`)).length === 0, 'estranho não altera categorias')
 ok((await q(`update membros set nome = 'x' returning id`)).length === 0, 'estranho não altera membros')
 
+// =============================================================================
+// Etapa 9 · Tempo real (0007)
+// =============================================================================
+console.log('\n— Tempo real —')
+await db.exec('reset role')
+await db.exec('create publication supabase_realtime')
+await db.exec(ler('migrations/0007_tempo_real.sql'))
+await db.exec(ler('migrations/0007_tempo_real.sql'))
+const publicadas = (await q(`select tablename from pg_publication_tables where pubname = 'supabase_realtime' order by 1`)).map((r) => r.tablename)
+ok(publicadas.length === 8 && publicadas.includes('lancamentos'), 'as 8 tabelas entram no tempo real (e rodar de novo não dá erro)')
+
 await db.exec('reset role')
 console.log(falhas === 0 ? '\nTudo certo.' : `\n${falhas} falha(s).`)
 process.exit(falhas === 0 ? 0 : 1)
