@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { contaPrincipalDe, moverConta, proximaOrdem } from './contas.ts'
+import { abasDoMembro, contaPrincipalDe, moverConta, proximaOrdem } from './contas.ts'
 import type { Conta } from '../types/banco.ts'
 
 const conta = (id: string, extra: Partial<Conta> = {}): Conta => ({
@@ -81,5 +81,29 @@ describe('proximaOrdem', () => {
   it('vai para o fim', () => {
     expect(proximaOrdem([{ ordem: 3 }, { ordem: 1 }])).toBe(4)
     expect(proximaOrdem([])).toBe(1)
+  })
+})
+
+describe('abasDoMembro', () => {
+  const contas = [
+    conta('lucas', { ordem: 1, criado_em: '2026-01-01T00:00:00Z' }),
+    conta('emillia', { dono_id: 'emillia', ordem: 2 }),
+    conta('casa', { tipo: 'compartilhada', dono_id: null, ordem: 3 }),
+    conta('carro', { ordem: 0, criado_em: '2026-05-01T00:00:00Z' }),
+    conta('velha', { tipo: 'compartilhada', dono_id: null, arquivada: true }),
+  ]
+
+  it('as minhas primeiro (principal na frente), depois compartilhadas e as do outro', () => {
+    const r = abasDoMembro(contas, 'lucas')
+    expect(r.principal?.id).toBe('lucas')
+    expect(r.minhas.map((c) => c.id)).toEqual(['lucas', 'carro'])
+    expect(r.compartilhadas.map((c) => c.id)).toEqual(['casa'])
+    expect(r.dosOutros.map((c) => c.id)).toEqual(['emillia'])
+  })
+
+  it('do ponto de vista da Emillia', () => {
+    const r = abasDoMembro(contas, 'emillia')
+    expect(r.minhas.map((c) => c.id)).toEqual(['emillia'])
+    expect(r.dosOutros.map((c) => c.id)).toEqual(['lucas', 'carro'])
   })
 })

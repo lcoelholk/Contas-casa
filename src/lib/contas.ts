@@ -50,3 +50,21 @@ export function moverConta(
 export function proximaOrdem(contas: Pick<Conta, 'ordem'>[]): number {
   return contas.reduce((maior, c) => Math.max(maior, c.ordem), 0) + 1
 }
+
+/**
+ * Separa as abas ativas do ponto de vista de quem está logado:
+ * as dele primeiro (a principal na frente), depois as compartilhadas e por último as do outro.
+ */
+export function abasDoMembro<T extends ContaMinima & Pick<Conta, 'ordem'>>(contas: T[], membroId: string | undefined) {
+  const ativas = contas.filter((c) => !c.arquivada)
+  const principal = membroId ? contaPrincipalDe(ativas, membroId) : undefined
+  const minhas = ativas
+    .filter((c) => c.tipo === 'pessoal' && c.dono_id === membroId)
+    .sort((a, b) => (a.id === principal?.id ? -1 : b.id === principal?.id ? 1 : a.ordem - b.ordem))
+  return {
+    principal,
+    minhas,
+    compartilhadas: ativas.filter((c) => c.tipo === 'compartilhada'),
+    dosOutros: ativas.filter((c) => c.tipo === 'pessoal' && c.dono_id !== membroId),
+  }
+}
