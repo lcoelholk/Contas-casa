@@ -55,6 +55,12 @@ export function Layout() {
             <NavLink to="/" end className={classeAba}>
               Resumo
             </NavLink>
+            <NavLink to="/graficos" className={classeAba}>
+              Gráficos
+            </NavLink>
+            <NavLink to="/metas" className={classeAba}>
+              Metas
+            </NavLink>
             {contas.data?.map((conta) => (
               <NavLink key={conta.id} to={`/conta/${conta.id}`} className={classeAba}>
                 <Bolinha cor={conta.cor} />

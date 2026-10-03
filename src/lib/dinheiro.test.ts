@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import {
   centavosParaCampo,
+  formatarCentavosCurto,
   dividirIgual,
   dividirPorPercentual,
   formatarCentavos,
@@ -96,5 +97,16 @@ describe('dividirPorPercentual', () => {
 
   it('aceita pesos que não somam 100', () => {
     expect(dividirPorPercentual(900, [2, 1])).toEqual([600, 300])
+  })
+})
+
+describe('formatarCentavosCurto', () => {
+  it('compacta para eixos de gráfico', () => {
+    expect(formatarCentavosCurto(0)).toBe('R$ 0')
+    expect(formatarCentavosCurto(85000)).toBe('R$ 850')
+    expect(formatarCentavosCurto(120000)).toBe('R$ 1,2 mil')
+    expect(formatarCentavosCurto(1500000)).toBe('R$ 15 mil')
+    expect(formatarCentavosCurto(250000000)).toBe('R$ 2,5 mi')
+    expect(formatarCentavosCurto(-50000)).toBe('-R$ 500')
   })
 })

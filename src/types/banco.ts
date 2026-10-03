@@ -104,3 +104,34 @@ export type LinhaDeCompra = Pick<
   Lancamento,
   'id' | 'compra_id' | 'membro_id' | 'valor_centavos' | 'pago' | 'parcela_numero' | 'competencia'
 >
+
+/** Limite de gasto por mês numa categoria (membro_id nulo = dos dois) */
+export type Orcamento = {
+  id: string
+  categoria_id: string
+  membro_id: string | null
+  valor_centavos: number
+}
+
+/** Meta de economia (membro_id nulo = do casal) */
+export type Meta = {
+  id: string
+  nome: string
+  membro_id: string | null
+  valor_alvo_centavos: number
+  /** 1º dia do mês do prazo (null = sem prazo) */
+  prazo: string | null
+  cor: string | null
+  arquivada: boolean
+  criado_em: string
+}
+
+/** Dinheiro guardado (positivo) ou retirado (negativo) de uma meta */
+export type MetaAporte = {
+  id: string
+  meta_id: string
+  membro_id: string
+  valor_centavos: number
+  data: string
+  observacao: string | null
+}

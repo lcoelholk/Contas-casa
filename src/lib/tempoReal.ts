@@ -9,6 +9,9 @@ export const TABELAS_TEMPO_REAL = [
   'compras_parceladas',
   'compra_divisoes',
   'lancamentos',
+  'orcamentos',
+  'metas',
+  'meta_aportes',
 ] as const
 
 export type TabelaTempoReal = (typeof TABELAS_TEMPO_REAL)[number]
@@ -23,6 +26,9 @@ const CHAVES: Record<TabelaTempoReal, string[]> = {
   compra_divisoes: ['compras', 'lancamentos'],
   // as parcelas pagas entram no progresso das compras
   lancamentos: ['lancamentos', 'compras'],
+  orcamentos: ['orcamentos'],
+  metas: ['metas'],
+  meta_aportes: ['metas'],
 }
 
 /** Chaves do TanStack Query a invalidar para as tabelas que mudaram (sem repetir) */
