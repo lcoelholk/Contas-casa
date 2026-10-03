@@ -7,11 +7,13 @@ import { formatarDiaMes, hoje, nomeDaCompetencia } from '../lib/datas.ts'
 import { formatarCentavos } from '../lib/dinheiro.ts'
 import { calcularTotais } from '../lib/totais.ts'
 import { contaPrincipalDe } from '../lib/contas.ts'
+import { situacoesDoMes } from '../lib/analises.ts'
+import { useOrcamentos } from '../hooks/useAnalises.ts'
 import { gastosPorCategoria, separarAlertas } from '../lib/resumo.ts'
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
 import { CheckPago } from '../components/lancamentos.tsx'
 import { Segmentado } from '../components/campos.tsx'
-import type { Conta, Lancamento, Membro } from '../types/banco.ts'
+import type { Categoria, Conta, Lancamento, Membro } from '../types/banco.ts'
 
 export default function Resumo() {
   const { competencia } = useCompetencia()
@@ -88,6 +90,8 @@ export default function Resumo() {
           )
         })}
       </div>
+
+      <AlertaLimites lancamentos={todos} categorias={categorias.data ?? []} />
 
       <GastosPorCategoria lancamentos={todos} membros={listaMembros} categorias={categorias.data ?? []} />
     </div>
@@ -235,6 +239,36 @@ function GastosPorCategoria({
         </ul>
       )}
     </section>
+  )
+}
+
+/** Categorias perto ou acima do limite do mês (detalhes na tela de Metas) */
+function AlertaLimites({ lancamentos, categorias }: { lancamentos: Lancamento[]; categorias: Categoria[] }) {
+  const { competencia } = useCompetencia()
+  const orcamentos = useOrcamentos()
+  if (!orcamentos.data) return null
+  const preocupantes = situacoesDoMes(orcamentos.data, lancamentos, competencia).filter((s) => s.situacao.status !== 'ok')
+  if (preocupantes.length === 0) return null
+  const nome = (id: string) => categorias.find((c) => c.id === id)?.nome ?? 'Categoria'
+  return (
+    <Link
+      to="/metas"
+      className="block rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 shadow-sm"
+    >
+      <p className="font-semibold">
+        <span aria-hidden>⚠ </span>Limite de gastos
+      </p>
+      <ul className="mt-1 flex flex-col gap-0.5">
+        {preocupantes.map(({ orcamento, situacao }) => (
+          <li key={orcamento.id}>
+            {nome(orcamento.categoria_id)}:{' '}
+            {situacao.status === 'estourou'
+              ? `passou ${formatarCentavos(-situacao.restante)} do limite`
+              : `${situacao.percentual}% do limite`}
+          </li>
+        ))}
+      </ul>
+    </Link>
   )
 }
 

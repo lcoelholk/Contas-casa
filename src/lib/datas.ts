@@ -116,3 +116,17 @@ export function diasEntre(de: DataISO, ate: DataISO): number {
   const ms = Date.UTC(b.ano, b.mes - 1, b.dia) - Date.UTC(a.ano, a.mes - 1, a.dia)
   return Math.round(ms / 86_400_000)
 }
+
+/** Todas as competências de `de` até `ate`, inclusive */
+export function listaDeMeses(de: Competencia, ate: Competencia): Competencia[] {
+  const n = mesesEntre(de, ate)
+  return Array.from({ length: Math.max(0, n + 1) }, (_, i) => somarMeses(de, i))
+}
+
+const NOMES_CURTOS = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
+
+/** "2026-10-01" → "out" (ou "out/26" com o ano) */
+export function nomeCurtoDoMes(competencia: Competencia, comAno = false): string {
+  const { ano, mes } = lerData(competencia)
+  return comAno ? `${NOMES_CURTOS[mes - 1]}/${String(ano).slice(2)}` : NOMES_CURTOS[mes - 1]
+}

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import {
   competenciaAtual,
+  listaDeMeses,
+  nomeCurtoDoMes,
   competenciaDe,
   diasEntre,
   formatarDiaMes,
@@ -88,5 +90,17 @@ describe('formatação', () => {
   it('dias entre datas', () => {
     expect(diasEntre('2026-09-30', '2026-10-05')).toBe(5)
     expect(diasEntre('2026-10-05', '2026-09-30')).toBe(-5)
+  })
+})
+
+describe('listaDeMeses e nomeCurtoDoMes', () => {
+  it('lista os meses inclusive, virando o ano', () => {
+    expect(listaDeMeses('2026-11-01', '2027-02-01')).toEqual(['2026-11-01', '2026-12-01', '2027-01-01', '2027-02-01'])
+    expect(listaDeMeses('2026-11-01', '2026-10-01')).toEqual([])
+  })
+
+  it('nome curto', () => {
+    expect(nomeCurtoDoMes('2026-10-01')).toBe('out')
+    expect(nomeCurtoDoMes('2027-01-01', true)).toBe('jan/27')
   })
 })

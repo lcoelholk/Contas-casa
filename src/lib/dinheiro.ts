@@ -14,6 +14,20 @@ export function formatarCentavos(centavos: number): string {
 }
 
 /**
+ * Valor curto para eixos de gráfico: 0 → "R$ 0", 85000 → "R$ 850",
+ * 120000 → "R$ 1,2 mil", 1500000 → "R$ 15 mil", 250000000 → "R$ 2,5 mi"
+ */
+export function formatarCentavosCurto(centavos: number): string {
+  const sinal = centavos < 0 ? '-' : ''
+  const reais = Math.abs(centavos) / 100
+  const numero = (v: number, casas: number) =>
+    v.toLocaleString('pt-BR', { maximumFractionDigits: casas, minimumFractionDigits: 0 })
+  if (reais >= 1_000_000) return `${sinal}R$ ${numero(reais / 1_000_000, 1)} mi`
+  if (reais >= 1000) return `${sinal}R$ ${numero(reais / 1000, reais >= 10_000 ? 0 : 1)} mil`
+  return `${sinal}R$ ${numero(reais, 0)}`
+}
+
+/**
  * Converte o que a pessoa digitou em centavos. Aceita:
  * "12,50" · "1.234,56" · "R$ 12" · "12.5" · "1234" · "-10,00"
  * Retorna null se não for um valor válido.

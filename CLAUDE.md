@@ -88,6 +88,20 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 - Tipo e dono **não mudam** depois de criada (trigger na migration 0006).
 - Conta arquivada **não gera** mais contas fixas nem parcelas; desarquivar volta a gerar. Se ainda tiver lançamentos no mês aberto, ela continua aparecendo na aba da pessoa e no Resumo.
 
+### Gráficos (tela "Gráficos")
+- Filtros no topo: período (3, 6 ou 12 meses, terminando no mês do seletor) e pessoa (os dois, Lucas, Emillia)
+- Números do período: gasto do mês vs média dos anteriores, gasto médio, entrada média, quanto sobrou das entradas
+- Entradas e gastos mês a mês (colunas; tocar mostra o saldo)
+- Gastos por categoria no período; tocar numa categoria mostra a evolução dela mês a mês
+- Divisão das contas compartilhadas entre os dois (quem pagou quanto)
+- Próximos 6 meses: o que já está comprometido (contas fixas, parcelas, outros)
+- Gráficos em SVG próprio (`src/components/graficos.tsx`), sem biblioteca: barras finas, legenda, toque mostra valores e "Ver em tabela" mostra os números
+
+### Metas (tela "Metas")
+- **Metas de economia:** nome, valor, de quem (dos dois ou de uma pessoa), prazo opcional e cor. Guardar e retirar dinheiro (aportes), com histórico. Com prazo, mostra quanto guardar por mês. Arquivar ou excluir.
+- **Limite de gastos:** limite mensal por categoria, de uma pessoa ou dos dois somados. Barra com status (dentro, perto a partir de 80%, passou). Os limites perto ou acima aparecem também no Resumo.
+- Guardar dinheiro numa meta **não** vira lançamento: é só um registro do quanto foi separado.
+
 ### Configurações (tela "Ajustes")
 - Contas: criar, editar, reordenar (↑ ↓), arquivar e desarquivar
 - Categorias: criar, renomear, trocar ícone, arquivar e desarquivar. Arquivada some dos formulários, mas os lançamentos antigos continuam com ela.
@@ -144,7 +158,7 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 │   │   └── datas.ts           ← competência, vencimento, fuso
 │   ├── hooks/                 ← useLancamentos, useContas, useCompetencia...
 │   ├── components/            ← UI reutilizável
-│   ├── pages/                 ← Resumo, Pessoa, Compartilhada, Configuracoes, Login
+│   ├── pages/                 ← Resumo, ContaPage, Graficos, Metas, Configuracoes, Login
 │   └── types/                 ← tipos gerados do banco
 ├── public/                    ← ícones do PWA
 └── .github/workflows/deploy.yml
@@ -289,6 +303,8 @@ Migration 0005 (compras parceladas), mesmas regras de segurança:
 | `quitar_compra(id, mes, lancar_saldo)` | Regra 8. Com `lancar_saldo`, o que falta entra no mês como "<descrição> (quitação)" (`parcela_numero` nulo) |
 | `excluir_compra(id)` | Regra 10 |
 
+Migration 0008 (metas): tabelas `orcamentos`, `metas` e `meta_aportes` (com RLS e tempo real) e a função `gerar_periodo(de, ate)`, que gera vários meses de uma vez (até 25) para os gráficos.
+
 Migration 0007 (tempo real): coloca as 8 tabelas na publicação `supabase_realtime`. O app escuta as mudanças (`useTempoReal`) e recarrega só os dados afetados (`src/lib/tempoReal.ts`). **Tabela nova precisa entrar nas duas listas.**
 
 Migration 0006 (contas dinâmicas): `gerar_competencia` passa a ignorar contas arquivadas, e um trigger impede mudar `tipo`/`dono_id` de uma conta.
@@ -383,10 +399,9 @@ Cada etapa só termina quando o critério "pronto quando" é atendido e o app ro
 
 ## 10. Fora da v1 (ideias para depois)
 
-- Gráficos de evolução mês a mês
-- Metas de economia (ex.: "reserva para viagem")
+- ~~Gráficos de evolução mês a mês~~ (feito: tela Gráficos)
+- ~~Metas de economia~~ e ~~orçamento por categoria com alerta~~ (feito: tela Metas)
 - Lembrete de vencimento por notificação ou e-mail
 - Importar extrato do banco (CSV/OFX)
 - Anexar comprovante ao lançamento
-- Orçamento por categoria com alerta ao estourar
 - Exportar o mês em PDF ou planilha

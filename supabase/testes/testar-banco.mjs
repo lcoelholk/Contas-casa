@@ -347,6 +347,38 @@ await db.exec(ler('migrations/0007_tempo_real.sql'))
 const publicadas = (await q(`select tablename from pg_publication_tables where pubname = 'supabase_realtime' order by 1`)).map((r) => r.tablename)
 ok(publicadas.length === 8 && publicadas.includes('lancamentos'), 'as 8 tabelas entram no tempo real (e rodar de novo não dá erro)')
 
+// =============================================================================
+// Metas e análises (0008)
+// =============================================================================
+console.log('\n— Metas e orçamentos —')
+await como('authenticated', 'lucascoelho855@gmail.com')
+const mercado = (await q(`select id from categorias where nome = 'Mercado'`))[0].id
+await q(`insert into orcamentos (categoria_id, membro_id, valor_centavos) values ($1, null, 150000), ($1, $2, 80000)`, [mercado, lucas])
+await deveFalhar(`insert into orcamentos (categoria_id, membro_id, valor_centavos) values ('${mercado}', null, 1000)`, 'só um orçamento dos dois por categoria')
+await deveFalhar(`insert into orcamentos (categoria_id, membro_id, valor_centavos) values ('${mercado}', '${lucas}', 1000)`, 'só um orçamento por pessoa por categoria')
+await deveFalhar(`insert into orcamentos (categoria_id, valor_centavos) values ('${mercado}', 0)`, 'orçamento zero é bloqueado')
+
+const metaViagem = (await q(`insert into metas (nome, valor_alvo_centavos, prazo) values ('Viagem', 600000, '2027-06-01') returning id`))[0].id
+await q(`insert into meta_aportes (meta_id, membro_id, valor_centavos, data) values ($1, $2, 50000, '2026-10-05'), ($1, $3, 30000, '2026-10-06'), ($1, $2, -10000, '2026-10-20')`, [metaViagem, lucas, emillia])
+ok((await q(`select sum(valor_centavos)::int s from meta_aportes where meta_id = $1`, [metaViagem]))[0].s === 70000, 'aportes e retiradas da meta somam certo')
+await deveFalhar(`insert into meta_aportes (meta_id, membro_id, valor_centavos, data) values ('${metaViagem}', '${lucas}', 0, '2026-10-01')`, 'aporte zero é bloqueado')
+await como('authenticated', 'emillia@teste.com')
+ok((await q(`select count(*)::int n from metas`))[0].n === 1, 'Emillia vê a meta criada pelo Lucas')
+
+const streaming = (await q(`select criar_recorrente($1, 'saida', 'Streaming', null, 10, '2028-01-01', $2::jsonb) id`, [idCasa, partes(5000, 5000)]))[0].id
+await q(`select gerar_periodo('2028-01-01', '2028-03-01')`)
+ok((await q(`select count(*)::int n from lancamentos where recorrente_id = $1`, [streaming]))[0].n === 6, 'gerar_periodo gera vários meses de uma vez (3 meses × 2 pessoas)')
+ok((await q(`select gerar_periodo('2028-01-01', '2028-03-01') n`))[0].n === 0, 'gerar_periodo de novo não duplica')
+await deveFalhar(`select gerar_periodo('2026-01-01', '2028-06-01')`, 'período longo demais é recusado')
+
+await como('authenticated', 'estranho@teste.com')
+ok((await q(`select count(*)::int n from metas`))[0].n === 0, 'estranho não vê metas')
+ok((await q(`select count(*)::int n from orcamentos`))[0].n === 0, 'estranho não vê orçamentos')
+await deveFalhar(`insert into metas (nome, valor_alvo_centavos) values ('Invasão', 100)`, 'estranho não cria meta')
+await como('anon', null)
+await deveFalhar(`select count(*) from meta_aportes`, 'visitante sem login não lê aportes')
+await deveFalhar(`select gerar_periodo('2026-10-01', '2026-11-01')`, 'visitante sem login não gera período')
+
 await db.exec('reset role')
 console.log(falhas === 0 ? '\nTudo certo.' : `\n${falhas} falha(s).`)
 process.exit(falhas === 0 ? 0 : 1)
