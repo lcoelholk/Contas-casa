@@ -1,7 +1,10 @@
-import { NavLink, Outlet } from 'react-router-dom'
+import { useState } from 'react'
+import { NavLink, Outlet, useNavigate } from 'react-router-dom'
 import { useAuth } from '../lib/auth.tsx'
-import { useContas, useMembroAtual } from '../hooks/useDados.ts'
+import { useContas, useMembroAtual, useMembros, useTodasContas } from '../hooks/useDados.ts'
+import { useTempoReal } from '../hooks/useTempoReal.ts'
 import { SeletorMes } from './SeletorMes.tsx'
+import { FormConta } from './FormConta.tsx'
 import { Bolinha } from './ui.tsx'
 
 const classeAba = ({ isActive }: { isActive: boolean }) =>
@@ -13,6 +16,11 @@ export function Layout() {
   const { sair } = useAuth()
   const { membro } = useMembroAtual()
   const contas = useContas()
+  const todasContas = useTodasContas()
+  const membros = useMembros()
+  const navigate = useNavigate()
+  const [criandoConta, setCriandoConta] = useState(false)
+  useTempoReal(Boolean(membro))
 
   return (
     <div className="flex min-h-dvh flex-col">
@@ -27,6 +35,14 @@ export function Layout() {
                   {membro.nome}
                 </span>
               )}
+              <NavLink
+                to="/configuracoes"
+                className={({ isActive }) =>
+                  `rounded-lg px-2 py-1 font-medium ${isActive ? 'bg-stone-100 text-stone-900' : 'text-stone-500 hover:bg-stone-100'}`
+                }
+              >
+                Ajustes
+              </NavLink>
               <button onClick={sair} className="rounded-lg px-2 py-1 font-medium text-stone-500 hover:bg-stone-100">
                 Sair
               </button>
@@ -45,6 +61,13 @@ export function Layout() {
                 {conta.nome}
               </NavLink>
             ))}
+            <button
+              type="button"
+              onClick={() => setCriandoConta(true)}
+              className="flex shrink-0 items-center rounded-full border border-dashed border-stone-300 px-3 py-2 text-sm font-medium text-stone-500 hover:bg-stone-100"
+            >
+              + Nova conta
+            </button>
           </nav>
         </div>
       </header>
@@ -52,6 +75,14 @@ export function Layout() {
       <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
         <Outlet />
       </main>
+
+      <FormConta
+        aberto={criandoConta}
+        onFechar={() => setCriandoConta(false)}
+        membros={membros.data ?? []}
+        contas={todasContas.data ?? []}
+        onCriada={(id) => navigate(`/conta/${id}`)}
+      />
     </div>
   )
 }

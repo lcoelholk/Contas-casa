@@ -26,6 +26,8 @@ Dois usuários, cada um com login próprio (e-mail). Os dois veem e editam **tod
 
 Botão **"+ Nova conta"** cria outra aba, pessoal (tem dono) ou compartilhada (funciona igual à Casa). Exemplos: Viagem, Pet, Carro.
 
+**Aba principal de cada pessoa:** é a conta pessoal ativa mais antiga dela (Lucas, Emillia). Ela reúne tudo da pessoa no mês: a própria conta, as outras contas pessoais dela e a parte dela nas compartilhadas. Outra conta pessoal criada depois (ex.: "Carro" do Lucas) mostra só os próprios lançamentos.
+
 ---
 
 ## 2. Conceitos
@@ -82,10 +84,13 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 
 ### Contas (abas) dinâmicas
 - Criar conta: nome, tipo (pessoal com dono, ou compartilhada), cor
-- Renomear, reordenar e arquivar. Arquivar esconde a aba mas mantém o histórico; na v1 não existe excluir conta com lançamentos.
+- Renomear, mudar a cor, reordenar e arquivar. Arquivar esconde a aba mas mantém o histórico; na v1 não existe excluir conta com lançamentos.
+- Tipo e dono **não mudam** depois de criada (trigger na migration 0006).
+- Conta arquivada **não gera** mais contas fixas nem parcelas; desarquivar volta a gerar. Se ainda tiver lançamentos no mês aberto, ela continua aparecendo na aba da pessoa e no Resumo.
 
-### Configurações
-- Categorias: criar, renomear, arquivar
+### Configurações (tela "Ajustes")
+- Contas: criar, editar, reordenar (↑ ↓), arquivar e desarquivar
+- Categorias: criar, renomear, trocar ícone, arquivar e desarquivar. Arquivada some dos formulários, mas os lançamentos antigos continuam com ela.
 - Nome e cor de cada membro
 
 ---
@@ -284,6 +289,10 @@ Migration 0005 (compras parceladas), mesmas regras de segurança:
 | `quitar_compra(id, mes, lancar_saldo)` | Regra 8. Com `lancar_saldo`, o que falta entra no mês como "<descrição> (quitação)" (`parcela_numero` nulo) |
 | `excluir_compra(id)` | Regra 10 |
 
+Migration 0007 (tempo real): coloca as 8 tabelas na publicação `supabase_realtime`. O app escuta as mudanças (`useTempoReal`) e recarrega só os dados afetados (`src/lib/tempoReal.ts`). **Tabela nova precisa entrar nas duas listas.**
+
+Migration 0006 (contas dinâmicas): `gerar_competencia` passa a ignorar contas arquivadas, e um trigger impede mudar `tipo`/`dono_id` de uma conta.
+
 `partes` é `{"<membro_id>": centavos}`. Em conta pessoal, só o dono pode ter valor (validado).
 `recorrentes` tem a coluna `tipo` (`saida`/`entrada`), para gasto fixo ou entrada fixa (salário).
 
@@ -333,7 +342,7 @@ Depois que Lucas e Emillia criarem as contas, **desativar novos cadastros** no S
    - Deploy: as mesmas duas como **Secrets** do repositório no GitHub.
    - A chave pública pode ficar no front-end: quem protege os dados é o RLS. **Nunca** colocar a chave `service_role` / `sb_secret_...` no código nem no repositório.
 8. Ativar o **GitHub Pages** com origem "GitHub Actions". O workflow `deploy.yml` faz o build e publica a cada push na `main`. Configurar `base: '/Contas-casa/'` no `vite.config.ts`.
-9. No celular, abrir o link e escolher "Adicionar à tela inicial".
+9. No celular, abrir o link e escolher "Adicionar à tela inicial" (iPhone: Safari → Compartilhar → Adicionar à Tela de Início; Android: Chrome → ⋮ → Instalar app). Os ícones estão em `public/` (fonte: `icone.svg` e `icone-maskable.svg`). O service worker guarda só os arquivos do app; os dados vêm sempre do Supabase. Depois de cada publicação, o app se atualiza sozinho ao abrir.
 
 **Mudanças no banco:** toda migration nova deve passar em `npm run test:banco` (Postgres local simulando o Supabase) antes de ser aplicada no projeto real. Ao criar tabela nova, incluir a tabela no laço de RLS/grants (ver `0002_seguranca.sql`) e adicionar testes de acesso.
 

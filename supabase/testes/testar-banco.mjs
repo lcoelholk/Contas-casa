@@ -294,6 +294,59 @@ await deveFalhar(`select criar_recorrente('${idCasa}', 'saida', 'Invasão', null
 await como('anon', null)
 await deveFalhar(`select gerar_competencia('2026-10-01')`, 'visitante sem login não executa a geração')
 
+// =============================================================================
+// Etapa 8 · Contas dinâmicas e configurações (0006)
+// =============================================================================
+console.log('\n— Contas dinâmicas —')
+await como('authenticated', 'lucascoelho855@gmail.com')
+const viagem = (await q(`insert into contas (nome, tipo, cor, ordem) values ('Viagem', 'compartilhada', '#7c3aed', 4) returning id`))[0].id
+const hotel = (await q(`select criar_recorrente($1, 'saida', 'Hotel', null, 10, '2027-03-01', $2::jsonb) id`, [viagem, partes(30000, 30000)]))[0].id
+await gerar('2027-03-01')
+ok(JSON.stringify(await linhasDe(hotel, '2027-03-01')) === '{"Emillia":30000,"Lucas":30000}', 'conta nova "Viagem" funciona igual à Casa')
+await q(`insert into lancamentos (conta_id, membro_id, tipo, descricao, valor_centavos, competencia, grupo_id)
+         values ($1, $2, 'saida', 'Passagem', 50000, '2027-03-01', gen_random_uuid())`, [viagem, emillia])
+
+await q(`update contas set nome = 'Viagem 2027', ordem = 0 where id = $1`, [viagem])
+ok((await q(`select nome from contas where id = $1`, [viagem]))[0].nome === 'Viagem 2027', 'renomeia e reordena conta')
+await deveFalhar(`update contas set tipo = 'pessoal', dono_id = '${lucas}' where id = '${viagem}'`, 'tipo da conta não muda depois de criada')
+await deveFalhar(`update contas set dono_id = '${emillia}' where id = '${idContaLucas}'`, 'dono da conta não muda depois de criado')
+await deveFalhar(`delete from contas where id = '${viagem}'`, 'conta com lançamentos não pode ser excluída')
+
+await q(`update contas set arquivada = true where id = $1`, [viagem])
+ok((await gerar('2027-04-01')) >= 0 && Object.keys(await linhasDe(hotel, '2027-04-01')).length === 0, 'conta arquivada não gera mais contas fixas')
+ok(Object.keys(await linhasDe(hotel, '2027-03-01')).length === 2, 'conta arquivada mantém o histórico')
+const tv2 = (await q(`select criar_compra($1, 'Mala', null, 20000, 4, '2027-03-01', 5, $2::jsonb) id`, [viagem, partes(2500, 2500)]))[0].id
+await gerar('2027-05-01')
+ok((await q(`select count(*)::int n from lancamentos where compra_id = $1`, [tv2]))[0].n === 0, 'conta arquivada não gera parcelas')
+await q(`update contas set arquivada = false where id = $1`, [viagem])
+await gerar('2027-05-01')
+ok((await q(`select count(*)::int n from lancamentos where compra_id = $1`, [tv2]))[0].n === 2, 'desarquivar volta a gerar')
+
+console.log('\n— Configurações —')
+const viagens = (await q(`insert into categorias (nome, tipo, icone) values ('Viagens', 'saida', '✈️') returning id`))[0].id
+await deveFalhar(`insert into categorias (nome, tipo) values ('Viagens', 'saida')`, 'categoria com nome repetido é bloqueada')
+await q(`update categorias set nome = 'Passeios', arquivada = true where id = $1`, [viagens])
+ok((await q(`select nome, arquivada from categorias where id = $1`, [viagens]))[0].arquivada === true, 'renomeia e arquiva categoria')
+await q(`update membros set nome = 'Emi', cor = '#db2777' where id = $1`, [emillia])
+await como('authenticated', 'emillia@teste.com')
+ok((await q(`select nome from membros where id = $1`, [emillia]))[0].nome === 'Emi', 'nome do membro alterado aparece para o outro')
+
+await como('authenticated', 'estranho@teste.com')
+await deveFalhar(`insert into contas (nome, tipo) values ('Invasão', 'compartilhada')`, 'estranho não cria conta')
+ok((await q(`update categorias set nome = 'x' returning id`)).length === 0, 'estranho não altera categorias')
+ok((await q(`update membros set nome = 'x' returning id`)).length === 0, 'estranho não altera membros')
+
+// =============================================================================
+// Etapa 9 · Tempo real (0007)
+// =============================================================================
+console.log('\n— Tempo real —')
+await db.exec('reset role')
+await db.exec('create publication supabase_realtime')
+await db.exec(ler('migrations/0007_tempo_real.sql'))
+await db.exec(ler('migrations/0007_tempo_real.sql'))
+const publicadas = (await q(`select tablename from pg_publication_tables where pubname = 'supabase_realtime' order by 1`)).map((r) => r.tablename)
+ok(publicadas.length === 8 && publicadas.includes('lancamentos'), 'as 8 tabelas entram no tempo real (e rodar de novo não dá erro)')
+
 await db.exec('reset role')
 console.log(falhas === 0 ? '\nTudo certo.' : `\n${falhas} falha(s).`)
 process.exit(falhas === 0 ? 0 : 1)

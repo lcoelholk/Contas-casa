@@ -59,7 +59,8 @@ export function SeletorCategoria({
     <select value={valor} onChange={(e) => onChange(e.target.value)} className={classeInput}>
       <option value="">Sem categoria</option>
       {categorias
-        .filter((c) => c.tipo === tipo)
+        // Arquivada só aparece se já estiver escolhida (lançamento antigo)
+        .filter((c) => c.tipo === tipo && (!c.arquivada || c.id === valor))
         .map((c) => (
           <option key={c.id} value={c.id}>
             {c.icone ? `${c.icone} ` : ''}
@@ -168,6 +169,36 @@ export function BotoesFormulario({
           {excluindo ? 'Excluindo…' : confirmandoExclusao ? 'Toque de novo para excluir' : 'Excluir'}
         </button>
       )}
+    </div>
+  )
+}
+
+/** Bolinhas de cor para escolher (abas e pessoas) */
+export function SeletorCor({
+  cores,
+  valor,
+  onChange,
+}: {
+  cores: readonly string[]
+  valor: string
+  onChange: (cor: string) => void
+}) {
+  return (
+    <div role="radiogroup" aria-label="Cor" className="flex flex-wrap gap-2">
+      {cores.map((cor) => (
+        <button
+          key={cor}
+          type="button"
+          role="radio"
+          aria-checked={valor === cor}
+          aria-label={cor}
+          onClick={() => onChange(cor)}
+          className={`size-10 rounded-full border-4 transition-transform ${
+            valor === cor ? 'scale-110 border-stone-900' : 'border-white shadow-sm'
+          }`}
+          style={{ backgroundColor: cor }}
+        />
+      ))}
     </div>
   )
 }

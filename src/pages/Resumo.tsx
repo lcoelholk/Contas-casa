@@ -1,11 +1,12 @@
 import { useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCompetencia } from '../hooks/useCompetencia.tsx'
-import { useContas, useMembros } from '../hooks/useDados.ts'
+import { useMembros, useTodasContas } from '../hooks/useDados.ts'
 import { useAlertas, useCategorias, useLancamentos, useMarcarPago } from '../hooks/useLancamentos.ts'
 import { formatarDiaMes, hoje, nomeDaCompetencia } from '../lib/datas.ts'
 import { formatarCentavos } from '../lib/dinheiro.ts'
 import { calcularTotais } from '../lib/totais.ts'
+import { contaPrincipalDe } from '../lib/contas.ts'
 import { gastosPorCategoria, separarAlertas } from '../lib/resumo.ts'
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
 import { CheckPago } from '../components/lancamentos.tsx'
@@ -15,7 +16,7 @@ import type { Conta, Lancamento, Membro } from '../types/banco.ts'
 export default function Resumo() {
   const { competencia } = useCompetencia()
   const membros = useMembros()
-  const contas = useContas()
+  const contas = useTodasContas()
   const lancamentos = useLancamentos(competencia)
   const categorias = useCategorias()
 
@@ -27,8 +28,10 @@ export default function Resumo() {
   const todos = lancamentos.data ?? []
   const listaMembros = membros.data ?? []
   const listaContas = contas.data ?? []
-  const compartilhadas = listaContas.filter((c) => c.tipo === 'compartilhada')
-  const pessoalDe = (membroId: string) => listaContas.find((c) => c.tipo === 'pessoal' && c.dono_id === membroId)
+  // Compartilhadas arquivadas só aparecem se tiverem algo neste mês
+  const compartilhadas = listaContas.filter(
+    (c) => c.tipo === 'compartilhada' && (!c.arquivada || todos.some((l) => l.conta_id === c.id)),
+  )
 
   return (
     <div className="flex flex-col gap-4">
@@ -40,7 +43,7 @@ export default function Resumo() {
 
       <div className="grid gap-3 sm:grid-cols-2">
         {listaMembros.map((m) => {
-          const conta = pessoalDe(m.id)
+          const conta = contaPrincipalDe(listaContas, m.id)
           const t = calcularTotais(todos.filter((l) => l.membro_id === m.id))
           return (
             <Card key={m.id} titulo={m.nome} cor={m.cor} para={conta ? `/conta/${conta.id}` : undefined}>
