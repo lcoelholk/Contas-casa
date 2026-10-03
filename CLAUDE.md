@@ -98,6 +98,15 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 - Tipo e dono **não mudam** depois de criada (trigger na migration 0006).
 - Conta arquivada **não gera** mais contas fixas nem parcelas; desarquivar volta a gerar. Se ainda tiver lançamentos no mês aberto, ela continua aparecendo na aba da pessoa e no Resumo.
 
+### Contas fixas (tela "Contas fixas")
+- Todas as contas fixas ativas no mês, agrupadas por aba (Casa, Lucas, Emillia...), com dia de vencimento e quanto cada um paga
+- Total fixo por mês de cada pessoa (e entradas fixas, como salário)
+- "Começam depois" e "Encerradas" em listas recolhidas; tocar abre a edição
+- "+ Nova conta fixa": escolhe a aba e abre o formulário
+
+### Novo lançamento em qualquer conta
+- `NovoLancamento` (Transações e Contas fixas): escolhe a aba e depois o tipo: **só desta vez** (avulso), **todo mês** (conta fixa) ou **parcelado**
+
 ### Gráficos (tela "Gráficos")
 - Filtros no topo: período (3, 6 ou 12 meses, terminando no mês do seletor) e pessoa (os dois, Lucas, Emillia)
 - Números do período: gasto do mês vs média dos anteriores, gasto médio, entrada média, quanto sobrou das entradas

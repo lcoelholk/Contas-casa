@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCompetencia } from '../hooks/useCompetencia.tsx'
-import { useMembroAtual, useMembros, useTodasContas } from '../hooks/useDados.ts'
+import { useMembros, useTodasContas } from '../hooks/useDados.ts'
 import { useCategorias, useMarcarPago } from '../hooks/useLancamentos.ts'
 import { useLancamentosPeriodo } from '../hooks/useAnalises.ts'
 import { dataDoLancamento, filtrarTransacoes, type FiltroTransacoes } from '../lib/visaoGeral.ts'
@@ -10,10 +10,8 @@ import { formatarCentavos } from '../lib/dinheiro.ts'
 import { formatarData, nomeCurtoDoMes, nomeDaCompetencia, somarMeses } from '../lib/datas.ts'
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
 import { CheckPago } from '../components/lancamentos.tsx'
-import { Folha } from '../components/Folha.tsx'
-import { FormLancamentoPessoal } from '../components/FormLancamentoPessoal.tsx'
-import { FormGastoCompartilhado } from '../components/FormGastoCompartilhado.tsx'
 import { classeInput } from '../components/campos.tsx'
+import { NovoLancamento } from '../components/NovoLancamento.tsx'
 import type { Conta, Lancamento } from '../types/banco.ts'
 
 const POR_PAGINA = 20
@@ -208,7 +206,7 @@ export default function Transacoes() {
           </button>
         </div>
       </div>
-      <NovaTransacao aberta={nova} onFechar={() => setNova(false)} contas={listaContas.filter((c) => !c.arquivada)} />
+      <NovoLancamento aberto={nova} onFechar={() => setNova(false)} contas={listaContas.filter((c) => !c.arquivada)} />
     </div>
   )
 }
@@ -307,61 +305,5 @@ function LinhaTransacao({
         </span>
       </button>
     </li>
-  )
-}
-
-/** Escolhe a conta e abre o formulário certo (pessoal ou compartilhado) */
-function NovaTransacao({ aberta, onFechar, contas }: { aberta: boolean; onFechar: () => void; contas: Conta[] }) {
-  const { competencia } = useCompetencia()
-  const { membro: eu } = useMembroAtual()
-  const membros = useMembros()
-  const [conta, setConta] = useState<Conta | null>(null)
-  const fechar = () => {
-    setConta(null)
-    onFechar()
-  }
-  const lista = membros.data ?? []
-  const dono = lista.find((m) => m.id === conta?.dono_id)
-
-  return (
-    <>
-      <Folha aberta={aberta && !conta} onFechar={fechar} titulo="Nova transação em…">
-        <ul className="flex flex-col gap-2">
-          {contas.map((c) => (
-            <li key={c.id}>
-              <button
-                type="button"
-                onClick={() => setConta(c)}
-                className="flex w-full items-center gap-3 rounded-xl border border-stone-200 px-3 py-3 text-left hover:bg-stone-50"
-              >
-                <Bolinha cor={c.cor} className="size-3" />
-                <span className="flex-1 font-medium">{c.nome}</span>
-                <span className="text-xs text-stone-500">{c.tipo === 'compartilhada' ? 'dividido' : 'pessoal'}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </Folha>
-      {conta?.tipo === 'pessoal' && dono && (
-        <FormLancamentoPessoal
-          aberto
-          onFechar={fechar}
-          conta={conta}
-          dono={dono}
-          competencia={competencia}
-          criadoPor={eu?.id}
-        />
-      )}
-      {conta?.tipo === 'compartilhada' && (
-        <FormGastoCompartilhado
-          aberto
-          onFechar={fechar}
-          conta={conta}
-          membros={lista}
-          competencia={competencia}
-          criadoPor={eu?.id}
-        />
-      )}
-    </>
   )
 }
