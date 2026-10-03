@@ -24,7 +24,7 @@ import {
 } from '../lib/datas.ts'
 import { formatarCentavos, somar } from '../lib/dinheiro.ts'
 import { Aviso, Carregando } from '../components/ui.tsx'
-import { Segmentado } from '../components/campos.tsx'
+import { BarraFiltros, EscolhaFiltro } from '../components/Filtros.tsx'
 import { CORES_SERIES, GraficoColunas, Indicador } from '../components/graficos.tsx'
 import type { Categoria, Conta, Membro } from '../types/banco.ts'
 
@@ -61,24 +61,40 @@ export default function Graficos() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <Segmentado
-          rotulo="Período"
-          valor={periodo}
-          onChange={setPeriodo}
-          opcoes={[
-            { valor: '3', texto: '3 meses' },
-            { valor: '6', texto: '6 meses' },
-            { valor: '12', texto: '12 meses' },
-          ]}
-        />
-        <Segmentado
-          rotulo="Pessoa"
-          valor={pessoa}
-          onChange={setPessoa}
-          opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...listaMembros.map((m) => ({ valor: m.id, texto: m.nome }))]}
-        />
-      </div>
+      <BarraFiltros
+        ativos={[
+          ...(periodo !== '6'
+            ? [{ chave: 'periodo', texto: `${periodo} meses`, onRemover: () => setPeriodo('6') }]
+            : []),
+          ...(pessoa !== 'todos'
+            ? [{ chave: 'pessoa', texto: nomePessoa ?? 'Pessoa', onRemover: () => setPessoa('todos') }]
+            : []),
+        ]}
+        onLimpar={() => {
+          setPeriodo('6')
+          setPessoa('todos')
+        }}
+        painel={
+          <>
+            <EscolhaFiltro
+              rotulo="Período"
+              valor={periodo}
+              onChange={setPeriodo}
+              opcoes={[
+                { valor: '3', texto: '3 meses' },
+                { valor: '6', texto: '6 meses' },
+                { valor: '12', texto: '12 meses' },
+              ]}
+            />
+            <EscolhaFiltro
+              rotulo="Pessoa"
+              valor={pessoa}
+              onChange={setPessoa}
+              opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...listaMembros.map((m) => ({ valor: m.id, texto: m.nome }))]}
+            />
+          </>
+        }
+      />
 
       <div className={`flex flex-col gap-4 transition-opacity ${dados.isPlaceholderData ? 'opacity-50' : ''}`}>
         <Numeros linhas={filtrados} meses={meses} />

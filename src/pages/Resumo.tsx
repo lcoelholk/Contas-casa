@@ -27,7 +27,7 @@ import { useOrcamentos } from '../hooks/useAnalises.ts'
 import { separarAlertas } from '../lib/resumo.ts'
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
 import { CheckPago } from '../components/lancamentos.tsx'
-import { Segmentado } from '../components/campos.tsx'
+import { BarraFiltros, EscolhaFiltro } from '../components/Filtros.tsx'
 import type { Categoria, Conta, Lancamento, Membro } from '../types/banco.ts'
 
 export default function Resumo() {
@@ -58,11 +58,27 @@ export default function Resumo() {
 
   return (
     <div className="flex flex-col gap-4">
-      <Segmentado
-        rotulo="Ver de quem"
-        valor={pessoa}
-        onChange={setPessoa}
-        opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...listaMembros.map((m) => ({ valor: m.id, texto: m.nome }))]}
+      <BarraFiltros
+        ativos={
+          pessoa === 'todos'
+            ? []
+            : [
+                {
+                  chave: 'pessoa',
+                  texto: listaMembros.find((m) => m.id === pessoa)?.nome ?? 'Pessoa',
+                  onRemover: () => setPessoa('todos'),
+                },
+              ]
+        }
+        onLimpar={() => setPessoa('todos')}
+        painel={
+          <EscolhaFiltro
+            rotulo="De quem"
+            valor={pessoa}
+            onChange={setPessoa}
+            opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...listaMembros.map((m) => ({ valor: m.id, texto: m.nome }))]}
+          />
+        }
       />
       <Atalhos contas={listaContas} />
       <RitmoDoMes
