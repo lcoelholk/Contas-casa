@@ -32,7 +32,7 @@ export function ExigeMembro({ children }: { children: ReactNode }) {
           Você entrou como <strong>{sessao.user.email}</strong>, mas esse e-mail ainda não está ligado a
           um membro. Confira se o <code>setup_casal.sql</code> foi rodado com este e-mail.
         </Aviso>
-        <button onClick={sair} className="h-11 rounded-xl border border-stone-300 bg-white font-medium">
+        <button onClick={sair} className="h-11 rounded-xl border border-stone-300 bg-superficie font-medium">
           Sair
         </button>
       </main>

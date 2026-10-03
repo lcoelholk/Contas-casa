@@ -53,7 +53,7 @@ export default function Login() {
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="h-12 rounded-xl border border-stone-300 bg-white px-3 text-base outline-none focus:border-marca-600 focus:ring-2 focus:ring-marca-100"
+            className="h-12 rounded-xl border border-stone-300 bg-superficie px-3 text-base outline-none focus:border-marca-600 focus:ring-2 focus:ring-marca-100"
           />
         </label>
 
@@ -66,7 +66,7 @@ export default function Login() {
               required
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
-              className="h-12 w-full rounded-xl border border-stone-300 bg-white px-3 pr-20 text-base outline-none focus:border-marca-600 focus:ring-2 focus:ring-marca-100"
+              className="h-12 w-full rounded-xl border border-stone-300 bg-superficie px-3 pr-20 text-base outline-none focus:border-marca-600 focus:ring-2 focus:ring-marca-100"
             />
             <button
               type="button"

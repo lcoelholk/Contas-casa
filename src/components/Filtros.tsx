@@ -77,7 +77,7 @@ export function BarraFiltros({
 
       <Folha aberta={aberto === 'filtros'} onFechar={() => setAberto(null)} titulo="Filtrar">
         <div className="flex flex-col gap-5">{painel}</div>
-        <div className="sticky bottom-0 mt-5 flex gap-2 bg-white pt-2">
+        <div className="sticky bottom-0 mt-5 flex gap-2 bg-superficie pt-2">
           <button
             type="button"
             onClick={onLimpar}
@@ -133,7 +133,7 @@ function BotaoBarra({ onClick, ativo, children }: { onClick: () => void; ativo?:
       type="button"
       onClick={onClick}
       className={`flex h-10 min-w-0 items-center gap-2 rounded-full border px-4 text-sm font-medium shadow-sm ${
-        ativo ? 'border-marca-600 bg-white text-marca-700' : 'border-stone-200 bg-white text-stone-700'
+        ativo ? 'border-marca-600 bg-superficie text-marca-700' : 'border-stone-200 bg-superficie text-stone-700'
       }`}
     >
       {children}
@@ -167,7 +167,7 @@ export function EscolhaFiltro<T extends string>({
             className={`min-h-10 rounded-full border px-3.5 text-sm font-medium ${
               o.valor === valor
                 ? 'border-marca-600 bg-marca-600 text-white'
-                : 'border-stone-200 bg-white text-stone-700 hover:bg-stone-50'
+                : 'border-stone-200 bg-superficie text-stone-700 hover:bg-stone-50'
             }`}
           >
             {o.texto}

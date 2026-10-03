@@ -10,6 +10,17 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Contas" />
     <title>Contas da Casa</title>
+    <script>
+      // Tema antes de desenhar a tela (mesma regra de src/lib/tema.ts)
+      try {
+        var t = localStorage.getItem('contas-casa:tema')
+        var escuro = t === 'escuro' || (t !== 'claro' && matchMedia('(prefers-color-scheme: dark)').matches)
+        if (escuro) {
+          document.documentElement.classList.add('dark')
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#1c1917')
+        }
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

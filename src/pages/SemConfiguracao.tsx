@@ -38,7 +38,7 @@ export default function SemConfiguracao() {
         </span>
       </section>
 
-      <section className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+      <section className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
         <h2 className="text-sm font-semibold text-stone-500 uppercase tracking-wide">
           Conexão com o Supabase
         </h2>
@@ -49,7 +49,7 @@ export default function SemConfiguracao() {
         />
       </section>
 
-      <footer className="mt-auto text-center text-xs text-stone-400">
+      <footer className="mt-auto text-center text-xs text-stone-500">
         Exemplo de formatação: {formatarCentavos(360000)} em 12x de {formatarCentavos(30000)}
       </footer>
     </main>

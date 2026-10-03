@@ -22,7 +22,7 @@ export function Layout() {
     <PessoaProvider>
       <NovoLancamentoContexto.Provider value={(tipo) => setNovo({ tipo })}>
         <div className="flex min-h-dvh flex-col">
-          <header className="sticky top-0 z-10 border-b border-stone-200 bg-white/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+          <header className="sticky top-0 z-10 border-b border-stone-200 bg-superficie/95 pt-[env(safe-area-inset-top)] backdrop-blur">
             <div className="mx-auto max-w-3xl px-4">
               <div className="flex h-12 items-center justify-between">
                 <span className="font-bold tracking-tight">Contas da Casa</span>
@@ -65,7 +65,7 @@ function BarraDeBaixo({ onNovo }: { onNovo: () => void }) {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-stone-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-stone-200 bg-superficie/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
     >
       <div className="mx-auto grid h-16 max-w-3xl grid-cols-5 items-center px-2">
         <ItemBarra para="/" fim rotulo="Início" icone={<IconeCasa />} />
@@ -75,7 +75,7 @@ function BarraDeBaixo({ onNovo }: { onNovo: () => void }) {
             type="button"
             onClick={onNovo}
             aria-label="Novo lançamento"
-            className="-mt-6 flex size-14 items-center justify-center rounded-full bg-marca-600 text-3xl leading-none text-white shadow-lg ring-4 ring-white active:scale-95"
+            className="-mt-6 flex size-14 items-center justify-center rounded-full bg-marca-600 text-3xl leading-none text-white shadow-lg ring-4 ring-superficie active:scale-95"
           >
             +
           </button>
@@ -106,7 +106,7 @@ function ItemBarra({
       to={para}
       end={fim}
       className={({ isActive }) =>
-        `flex flex-col items-center gap-0.5 py-1 text-[11px] font-medium ${
+        `flex flex-col items-center gap-0.5 py-1 text-xs font-medium ${
           (ativo ?? isActive) ? 'text-marca-700' : 'text-stone-500'
         }`
       }

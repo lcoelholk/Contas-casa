@@ -12,7 +12,7 @@ export function Bolinha({ cor, className = '' }: { cor: string | null; className
     <span
       aria-hidden
       className={`inline-block size-2.5 shrink-0 rounded-full ${className}`}
-      style={{ backgroundColor: cor ?? '#a8a29e' }}
+      style={{ backgroundColor: cor ?? 'var(--color-stone-400)' }}
     />
   )
 }

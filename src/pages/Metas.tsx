@@ -66,7 +66,7 @@ function Bloco({
   acao?: { texto: string; onClick: () => void }
 }) {
   return (
-    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
       <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
       {subtitulo && <p className="mt-0.5 text-xs text-stone-500">{subtitulo}</p>}
       <div className="mt-3">{children}</div>
@@ -366,7 +366,7 @@ function FormMeta({
                       type="button"
                       aria-label="Apagar este registro"
                       onClick={() => excluirAporte.mutate(a.id)}
-                      className="rounded-lg px-2 py-1 text-stone-400 hover:bg-stone-100 hover:text-red-700"
+                      className="rounded-lg px-2 py-1 text-stone-500 hover:bg-stone-100 hover:text-red-700"
                     >
                       ✕
                     </button>

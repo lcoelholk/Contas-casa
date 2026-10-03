@@ -230,7 +230,7 @@ function Bloco({ titulo, tom, children }: { titulo: string; tom: 'vermelho' | 'n
     <section
       aria-label={titulo}
       className={`rounded-2xl border px-4 pt-3 pb-1 shadow-sm ${
-        tom === 'vermelho' ? 'border-red-200 bg-red-50/60' : 'border-stone-200 bg-white'
+        tom === 'vermelho' ? 'border-red-200 bg-red-50/60' : 'border-stone-200 bg-superficie'
       }`}
     >
       <h2
@@ -317,7 +317,7 @@ function Card({
     </>
   )
   const classe =
-    'block rounded-2xl border border-stone-200 bg-white p-4 shadow-sm transition-colors hover:border-stone-300'
+    'block rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm transition-colors hover:border-stone-300'
   return para ? (
     <Link to={para} className={classe} aria-label={`Resumo de ${titulo}`}>
       {conteudo}
@@ -337,7 +337,7 @@ function Painel({
   children: ReactNode
 }) {
   return (
-    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
         {link && (
@@ -397,7 +397,7 @@ function RitmoDoMes({
   const acumAnterior = acumulado(porDiaAnterior)
 
   return (
-    <section aria-label="Como está o mês" className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+    <section aria-label="Como está o mês" className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
       <p className="text-lg font-semibold text-marca-700">Oi, {eu?.nome ?? 'tudo bem'}! Como está {doMes}?</p>
       <p className="mt-1 text-sm text-stone-700">{ehFuturo ? 'Este mês ainda não começou: aparecem só as contas fixas e parcelas já previstas.' : frase}</p>
 
@@ -429,7 +429,7 @@ function RitmoDoMes({
           tituloDica={(i) => `Até o dia ${i + 1}`}
           series={[
             { nome: 'Este mês', cor: '#0d9488', valores: acumAtual },
-            { nome: 'Mês passado', cor: '#a8a29e', valores: acumAnterior },
+            { nome: 'Mês passado', cor: 'var(--color-stone-400)', valores: acumAnterior },
           ]}
         />
       </div>
@@ -440,7 +440,7 @@ function RitmoDoMes({
 function MiniNumero({ rotulo, valor, detalhe, tom }: { rotulo: string; valor: string; detalhe?: string; tom?: string }) {
   return (
     <div className="min-w-0 rounded-xl bg-stone-50 p-2.5">
-      <p className="text-[11px] leading-tight font-medium text-stone-500 uppercase">{rotulo}</p>
+      <p className="text-xs leading-tight font-medium text-stone-500 uppercase">{rotulo}</p>
       <p className={`mt-1 truncate text-sm font-semibold ${tom ?? 'text-stone-900'}`}>{valor}</p>
       {detalhe && <p className="truncate text-xs text-stone-500">{detalhe}</p>}
     </div>
@@ -607,7 +607,7 @@ function Atalhos({ contas }: { contas: Conta[] }) {
   const novo = useNovoLancamento()
   const { minhas, compartilhadas } = abasDoMembro(contas, eu?.id)
   const classeLink =
-    'flex shrink-0 items-center gap-2 rounded-2xl border border-stone-200 bg-white px-3 py-2.5 text-sm font-medium shadow-sm hover:border-stone-300'
+    'flex shrink-0 items-center gap-2 rounded-2xl border border-stone-200 bg-superficie px-3 py-2.5 text-sm font-medium shadow-sm hover:border-stone-300'
   const classeAcao =
     'flex flex-col items-center gap-1 rounded-2xl bg-marca-50 px-2 py-3 text-xs font-semibold text-marca-700 hover:bg-marca-100'
   return (
@@ -617,7 +617,7 @@ function Atalhos({ contas }: { contas: Conta[] }) {
           <Link key={c.id} to={`/conta/${c.id}`} className={classeLink}>
             <Bolinha cor={c.cor} />
             {c.tipo === 'pessoal' && c.dono_id === eu?.id && minhas[0]?.id === c.id ? 'Minhas contas' : c.nome}
-            <span aria-hidden className="text-stone-400">
+            <span aria-hidden className="text-stone-500">
               ›
             </span>
           </Link>

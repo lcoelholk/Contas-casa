@@ -31,12 +31,12 @@ export function Folha({
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4">
-      <div className="absolute inset-0 bg-stone-900/40" onClick={onFechar} aria-hidden />
+      <div className="absolute inset-0 bg-black/50" onClick={onFechar} aria-hidden />
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby={idTitulo}
-        className="relative flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-white shadow-xl sm:rounded-3xl"
+        className="relative flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-3xl bg-superficie shadow-xl sm:rounded-3xl"
       >
         <div className="flex items-center justify-between border-b border-stone-100 px-4 py-3">
           <h2 id={idTitulo} className="text-base font-semibold">

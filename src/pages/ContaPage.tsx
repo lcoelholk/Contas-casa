@@ -131,7 +131,7 @@ function Secao({
 }) {
   const temConteudo = Array.isArray(children) ? children.length > 0 : Boolean(children)
   return (
-    <section className="rounded-2xl border border-stone-200 bg-white px-4 pt-4 pb-1 shadow-sm">
+    <section className="rounded-2xl border border-stone-200 bg-superficie px-4 pt-4 pb-1 shadow-sm">
       <div className="flex items-baseline justify-between gap-2">
         <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
         {subtotal !== undefined && subtotal > 0 && (

@@ -198,7 +198,7 @@ export default function Transacoes() {
         />
       </div>
 
-      <section aria-label="Lista de transações" className="rounded-2xl border border-stone-200 bg-white shadow-sm">
+      <section aria-label="Lista de transações" className="rounded-2xl border border-stone-200 bg-superficie shadow-sm">
         <div className="flex gap-2 border-b border-stone-100 p-3">
           <input
             type="search"
@@ -246,7 +246,7 @@ export default function Transacoes() {
 
 function Numero({ rotulo, valor, icone, tom }: { rotulo: string; valor: string; icone: string; tom?: string }) {
   return (
-    <div className="flex items-center gap-2 rounded-2xl border border-stone-200 bg-white p-3 shadow-sm">
+    <div className="flex items-center gap-2 rounded-2xl border border-stone-200 bg-superficie p-3 shadow-sm">
       <span aria-hidden className={`w-4 text-center text-lg ${tom ?? 'text-stone-500'}`}>
         {icone}
       </span>
@@ -291,7 +291,7 @@ function LinhaTransacao({
       >
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className={`truncate text-sm font-medium ${l.pago ? 'text-stone-500' : ''}`}>{l.descricao}</span>
-          <span className="flex flex-wrap items-center gap-1 text-[11px]">
+          <span className="flex flex-wrap items-center gap-1 text-xs">
             <span className="rounded-full bg-stone-100 px-2 py-0.5 text-stone-700">
               {categoria ? `${categoria.icone ?? ''} ${categoria.nome}` : 'Sem categoria'}
             </span>
