@@ -87,6 +87,7 @@ function funcaoAusente(erro: { code?: string; message?: string }) {
   return erro.code === 'PGRST202' || /could not find the function/i.test(erro.message ?? '')
 }
 
+/** Todas as categorias, inclusive arquivadas (os formulários só oferecem as ativas) */
 export function useCategorias() {
   const { sessao } = useAuth()
   return useQuery({
@@ -97,7 +98,6 @@ export function useCategorias() {
       const { data, error } = await db()
         .from('categorias')
         .select('id, nome, tipo, icone, arquivada')
-        .eq('arquivada', false)
         .order('nome')
       if (error) throw error
       return data as Categoria[]

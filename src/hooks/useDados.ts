@@ -31,8 +31,7 @@ export function useMembroAtual() {
   return { ...consulta, membro }
 }
 
-/** As abas (contas) ativas, na ordem definida */
-export function useContas() {
+function useConsultaContas<T>(select: (contas: Conta[]) => T) {
   const { sessao } = useAuth()
   return useQuery({
     queryKey: ['contas'],
@@ -40,12 +39,25 @@ export function useContas() {
     queryFn: async (): Promise<Conta[]> => {
       const { data, error } = await db()
         .from('contas')
-        .select('id, nome, tipo, dono_id, cor, ordem, arquivada')
-        .eq('arquivada', false)
+        .select('id, nome, tipo, dono_id, cor, ordem, arquivada, criado_em')
         .order('ordem')
         .order('criado_em')
       if (error) throw error
       return data as Conta[]
     },
+    select,
   })
+}
+
+const soAtivas = (contas: Conta[]) => contas.filter((c) => !c.arquivada)
+const todas = (contas: Conta[]) => contas
+
+/** As abas (contas) ativas, na ordem definida */
+export function useContas() {
+  return useConsultaContas(soAtivas)
+}
+
+/** Todas as abas, inclusive as arquivadas (para histórico e configurações) */
+export function useTodasContas() {
+  return useConsultaContas(todas)
 }

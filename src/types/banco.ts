@@ -20,6 +20,7 @@ export type Conta = {
   cor: string | null
   ordem: number
   arquivada: boolean
+  criado_em: string
 }
 
 export type TipoMovimento = 'saida' | 'entrada'

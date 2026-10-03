@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react'
 import { useParams } from 'react-router-dom'
 import { useCompetencia } from '../hooks/useCompetencia.tsx'
-import { useContas, useMembroAtual, useMembros } from '../hooks/useDados.ts'
+import { useMembroAtual, useMembros, useTodasContas } from '../hooks/useDados.ts'
 import { useAlternarPago, useCategorias, useLancamentos } from '../hooks/useLancamentos.ts'
 import { formatarCentavos, somar } from '../lib/dinheiro.ts'
 import { hoje, nomeDaCompetencia } from '../lib/datas.ts'
@@ -24,6 +24,8 @@ import { FormLancamentoPessoal } from '../components/FormLancamentoPessoal.tsx'
 import { FormGastoCompartilhado } from '../components/FormGastoCompartilhado.tsx'
 import { FormRecorrente } from '../components/FormRecorrente.tsx'
 import { FormCompra } from '../components/FormCompra.tsx'
+import { FormConta } from '../components/FormConta.tsx'
+import { contaPrincipalDe } from '../lib/contas.ts'
 import { useCompras } from '../hooks/useCompras.ts'
 import { resumoCompra } from '../lib/compras.ts'
 import type { Categoria, Conta, Lancamento, Membro } from '../types/banco.ts'
@@ -32,7 +34,7 @@ import type { Categoria, Conta, Lancamento, Membro } from '../types/banco.ts'
 export default function ContaPage() {
   const { id } = useParams()
   const { competencia } = useCompetencia()
-  const contas = useContas()
+  const contas = useTodasContas()
   const membros = useMembros()
   const lancamentos = useLancamentos(competencia)
   const categorias = useCategorias()
@@ -43,7 +45,7 @@ export default function ContaPage() {
   }
 
   const conta = contas.data?.find((c) => c.id === id)
-  if (!conta) return <Aviso titulo="Conta não encontrada">Ela pode ter sido arquivada.</Aviso>
+  if (!conta) return <Aviso titulo="Conta não encontrada" />
 
   const listaMembros = membros.data ?? []
   const dados = {
@@ -64,23 +66,52 @@ export default function ContaPage() {
 
 type Dados = {
   conta: Conta
+  /** Todas as abas, inclusive arquivadas */
   contas: Conta[]
   membros: Membro[]
   lancamentos: Lancamento[]
   categorias: Categoria[]
 }
 
-function Cabecalho({ conta, subtitulo }: { conta: Conta; subtitulo: string }) {
+function Cabecalho({
+  conta,
+  subtitulo,
+  contas,
+  membros,
+}: {
+  conta: Conta
+  subtitulo: string
+  contas: Conta[]
+  membros: Membro[]
+}) {
   const { competencia } = useCompetencia()
+  const [editando, setEditando] = useState(false)
   return (
-    <div>
-      <h1 className="flex items-center gap-2 text-lg font-semibold">
-        <Bolinha cor={conta.cor} className="size-3" />
-        {conta.nome}
-      </h1>
-      <p className="text-sm text-stone-500">
-        {subtitulo} · <span className="lowercase">{nomeDaCompetencia(competencia)}</span>
-      </p>
+    <div className="flex flex-col gap-3">
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <h1 className="flex items-center gap-2 text-lg font-semibold">
+            <Bolinha cor={conta.cor} className="size-3" />
+            {conta.nome}
+          </h1>
+          <p className="text-sm text-stone-500">
+            {subtitulo} · <span className="lowercase">{nomeDaCompetencia(competencia)}</span>
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setEditando(true)}
+          className="shrink-0 rounded-lg px-2 py-1 text-sm font-medium text-stone-500 hover:bg-stone-100"
+        >
+          Editar aba
+        </button>
+      </div>
+      {conta.arquivada && (
+        <p className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          Conta arquivada: não gera mais contas fixas nem parcelas. Em “Editar aba” dá para desarquivar.
+        </p>
+      )}
+      <FormConta aberto={editando} onFechar={() => setEditando(false)} membros={membros} contas={contas} conta={conta} />
     </div>
   )
 }
@@ -217,10 +248,18 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
   const [edicao, setEdicao] = useState<Edicao | null>(null)
   const dataHoje = hoje()
 
-  const meus = lancamentos.filter((l) => l.membro_id === dono.id)
+  // A aba principal da pessoa reúne tudo dela no mês; outras abas pessoais (ex.: Carro) só mostram a própria conta
+  const principal = contaPrincipalDe(contas, dono.id)
+  const ehPrincipal = principal?.id === conta.id
+  const doDono = lancamentos.filter((l) => l.membro_id === dono.id)
+  const meus = ehPrincipal ? doDono : doDono.filter((l) => l.conta_id === conta.id)
   const totais = calcularTotais(meus)
   const pessoais = ordenarLancamentos(meus.filter((l) => l.conta_id === conta.id))
-  const compartilhadas = contas.filter((c) => c.tipo === 'compartilhada')
+  // Arquivadas só aparecem se tiverem algo neste mês
+  const visivel = (c: Conta) => !c.arquivada || meus.some((l) => l.conta_id === c.id)
+  const outrasAbas = ehPrincipal
+    ? contas.filter((c) => c.id !== conta.id && visivel(c) && (c.tipo === 'compartilhada' || c.dono_id === dono.id))
+    : []
   const totalDoGrupo = (l: Lancamento) => {
     if (l.grupo_id) return somar(lancamentos.filter((x) => x.grupo_id === l.grupo_id).map((x) => x.valor_centavos))
     if (l.recorrente_id) {
@@ -250,7 +289,12 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
 
   return (
     <div className="flex flex-col gap-4 pb-20">
-      <Cabecalho conta={conta} subtitulo={`Conta pessoal de ${dono.nome}`} />
+      <Cabecalho
+        conta={conta}
+        contas={contas}
+        membros={membros}
+        subtitulo={ehPrincipal ? `Conta pessoal de ${dono.nome}` : `Outra conta de ${dono.nome}`}
+      />
       <PainelTotais totais={totais} />
 
       <Secao
@@ -265,12 +309,12 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
         {pessoais.map((l) => item(l, conta))}
       </Secao>
 
-      {compartilhadas.map((c) => {
+      {outrasAbas.map((c) => {
         const partes = ordenarLancamentos(meus.filter((l) => l.conta_id === c.id))
         return (
           <Secao
             key={c.id}
-            titulo={`Parte em ${c.nome}`}
+            titulo={c.tipo === 'compartilhada' ? `Parte em ${c.nome}` : c.nome}
             subtotal={calcularTotais(partes).saidas}
             vazio={`Nada de ${c.nome} para ${dono.nome} neste mês.`}
           >
@@ -295,7 +339,7 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
   )
 }
 
-function PaginaCompartilhada({ conta, membros, lancamentos, categorias }: Dados) {
+function PaginaCompartilhada({ conta, contas, membros, lancamentos, categorias }: Dados) {
   const { competencia } = useCompetencia()
   const { membro: eu } = useMembroAtual()
   const alternarPago = useAlternarPago(competencia)
@@ -328,7 +372,12 @@ function PaginaCompartilhada({ conta, membros, lancamentos, categorias }: Dados)
 
   return (
     <div className="flex flex-col gap-4 pb-20">
-      <Cabecalho conta={conta} subtitulo={`Dividida entre ${membros.map((m) => m.nome).join(' e ')}`} />
+      <Cabecalho
+        conta={conta}
+        contas={contas}
+        membros={membros}
+        subtitulo={`Dividida entre ${membros.map((m) => m.nome).join(' e ')}`}
+      />
       <PainelTotaisCompartilhada total={totais.saidas} pendente={totais.pendente} porMembro={porMembro} />
 
       <Secao
