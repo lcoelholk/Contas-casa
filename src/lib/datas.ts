@@ -130,3 +130,39 @@ export function nomeCurtoDoMes(competencia: Competencia, comAno = false): string
   const { ano, mes } = lerData(competencia)
   return comAno ? `${NOMES_CURTOS[mes - 1]}/${String(ano).slice(2)}` : NOMES_CURTOS[mes - 1]
 }
+
+/** Dia do mês de uma data: "2026-10-15" → 15 */
+export function diaDe(data: DataISO): number {
+  return lerData(data).dia
+}
+
+/** Quantos dias tem o mês da competência */
+export function diasNoMes(competencia: Competencia): number {
+  const { ano, mes } = lerData(competencia)
+  return ultimoDiaDoMes(ano, mes)
+}
+
+/** Dia da semana do 1º dia do mês (0 = domingo) */
+export function diaDaSemanaDoInicio(competencia: Competencia): number {
+  const { ano, mes } = lerData(competencia)
+  return new Date(Date.UTC(ano, mes - 1, 1)).getUTCDay()
+}
+
+/** "2026-10-01" → "01/10/2026" */
+export function formatarData(data: DataISO): string {
+  const { ano, mes, dia } = lerData(data)
+  return `${pad2(dia)}/${pad2(mes)}/${ano}`
+}
+
+const formatadorDiaSemana = new Intl.DateTimeFormat('pt-BR', {
+  weekday: 'short',
+  day: '2-digit',
+  month: 'short',
+  timeZone: 'UTC',
+})
+
+/** "2026-10-01" → "qui., 01 de out." */
+export function formatarDiaComSemana(data: DataISO): string {
+  const { ano, mes, dia } = lerData(data)
+  return formatadorDiaSemana.format(new Date(Date.UTC(ano, mes - 1, dia)))
+}

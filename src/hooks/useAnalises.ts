@@ -2,8 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { db } from '../lib/supabase.ts'
 import { useAuth } from '../lib/auth.tsx'
 import type { Competencia } from '../lib/datas.ts'
-import type { LinhaAnalise } from '../lib/analises.ts'
-import type { Meta, MetaAporte, Orcamento } from '../types/banco.ts'
+import type { Lancamento, Meta, MetaAporte, Orcamento } from '../types/banco.ts'
 
 /**
  * Lançamentos de vários meses, para os gráficos.
@@ -15,17 +14,17 @@ export function useLancamentosPeriodo(de: Competencia, ate: Competencia) {
     queryKey: ['lancamentos', 'periodo', de, ate],
     enabled: Boolean(sessao),
     placeholderData: (anterior) => anterior,
-    queryFn: async (): Promise<LinhaAnalise[]> => {
+    queryFn: async (): Promise<Lancamento[]> => {
       const cliente = db()
       const gerado = await cliente.rpc('gerar_periodo', { p_de: de, p_ate: ate })
       if (gerado.error) throw gerado.error
       const { data, error } = await cliente
         .from('lancamentos')
-        .select('conta_id, membro_id, tipo, valor_centavos, categoria_id, competencia, origem, pago')
+        .select('*')
         .gte('competencia', de)
         .lte('competencia', ate)
       if (error) throw error
-      return data as LinhaAnalise[]
+      return data as Lancamento[]
     },
   })
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { marcasDoEixo } from './graficos.tsx'
+import { marcasDoEixo, tomDoCalor } from './graficos.tsx'
 
 describe('marcasDoEixo', () => {
   it('passos redondos acima do maior valor', () => {
@@ -10,5 +10,14 @@ describe('marcasDoEixo', () => {
 
   it('sem dados ainda mostra um eixo', () => {
     expect(marcasDoEixo(0)).toEqual([0, 5000])
+  })
+})
+
+describe('tomDoCalor', () => {
+  it('zero fica sem cor; o resto em 4 faixas até o maior dia', () => {
+    expect(tomDoCalor(0, 1000)).toBe(0)
+    expect(tomDoCalor(1, 1000)).toBe(1)
+    expect(tomDoCalor(500, 1000)).toBe(2)
+    expect(tomDoCalor(1000, 1000)).toBe(4)
   })
 })
