@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCompetencia } from '../hooks/useCompetencia.tsx'
 import { usePessoa } from '../hooks/usePessoa.tsx'
@@ -8,17 +8,17 @@ import { useMembroAtual, useMembros, useTodasContas } from '../hooks/useDados.ts
 import { useAlertas, useCategorias, useLancamentos, useMarcarPago } from '../hooks/useLancamentos.ts'
 import {
   competenciaAtual,
-  diaDaSemanaDoInicio,
   diaDe,
   formatarDiaComSemana,
   formatarDiaMes,
   hoje,
   nomeCurtoDoMes,
-  nomeDaCompetencia,
   somarMeses,
 } from '../lib/datas.ts'
-import { acumulado, comparativoCategorias, dataDoLancamento, gastoPorDia, ritmo } from '../lib/visaoGeral.ts'
-import { GraficoLinhas, MapaDeCalor } from '../components/graficos.tsx'
+import { dataDoLancamento, gastoPorDia, ritmo } from '../lib/visaoGeral.ts'
+import { Painel } from '../components/AnaliseDoMes.tsx'
+import { Folha } from '../components/Folha.tsx'
+import { IconeCartao, IconeGrafico, IconeRecibo, IconeRepetir } from '../components/icones.tsx'
 import { formatarCentavos } from '../lib/dinheiro.ts'
 import { calcularTotais } from '../lib/totais.ts'
 import { contaPrincipalDe } from '../lib/contas.ts'
@@ -27,7 +27,7 @@ import { useOrcamentos } from '../hooks/useAnalises.ts'
 import { separarAlertas } from '../lib/resumo.ts'
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
 import { CheckPago } from '../components/lancamentos.tsx'
-import { BarraFiltros, EscolhaFiltro } from '../components/Filtros.tsx'
+import { EscolhaFiltro } from '../components/Filtros.tsx'
 import type { Categoria, Conta, Lancamento, Membro } from '../types/banco.ts'
 
 export default function Resumo() {
@@ -56,98 +56,177 @@ export default function Resumo() {
   const doMes = daPessoa(todos)
   const doMesAnterior = daPessoa(anteriores.data ?? [])
 
+  const nomePessoa = listaMembros.find((m) => m.id === pessoa)?.nome
+
   return (
     <div className="flex flex-col gap-4">
-      <BarraFiltros
-        ativos={
-          pessoa === 'todos'
-            ? []
-            : [
-                {
-                  chave: 'pessoa',
-                  texto: listaMembros.find((m) => m.id === pessoa)?.nome ?? 'Pessoa',
-                  onRemover: () => setPessoa('todos'),
-                },
-              ]
-        }
-        onLimpar={() => setPessoa('todos')}
-        painel={
-          <EscolhaFiltro
-            rotulo="De quem"
-            valor={pessoa}
-            onChange={setPessoa}
-            opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...listaMembros.map((m) => ({ valor: m.id, texto: m.nome }))]}
-          />
-        }
-      />
-      <Atalhos contas={listaContas} />
-      <RitmoDoMes
-        atual={doMes}
-        anterior={doMesAnterior}
-        categorias={categorias.data ?? []}
-        nome={listaMembros.find((m) => m.id === pessoa)?.nome}
+      <CartaoDoMes
+        lancamentos={doMes}
+        anteriores={doMesAnterior}
+        todos={todos}
+        membros={listaMembros}
+        contas={listaContas}
+        compartilhadas={compartilhadas}
+        pessoa={pessoa}
+        setPessoa={setPessoa}
       />
       <Alertas membros={listaMembros} contas={listaContas} pessoa={pessoa} />
-
-      <h1 className="mt-2 text-lg font-semibold">
-        Resumo de <span className="lowercase">{nomeDaCompetencia(competencia)}</span>
-      </h1>
-
-      <div className="grid gap-3 sm:grid-cols-2">
-        {listaMembros.filter((m) => pessoa === 'todos' || m.id === pessoa).map((m) => {
-          const conta = contaPrincipalDe(listaContas, m.id)
-          const t = calcularTotais(todos.filter((l) => l.membro_id === m.id))
-          return (
-            <Card key={m.id} titulo={m.nome} cor={m.cor} para={conta ? `/conta/${conta.id}` : undefined}>
-              {t.saidas === 0 && t.entradas === 0 ? (
-                <Vazio />
-              ) : (
-                <>
-                  <Linha rotulo="A pagar no mês" valor={t.saidas} forte />
-                  <Linha rotulo="Pago" valor={t.pago} />
-                  <Linha rotulo="Pendente" valor={t.pendente} destaque={t.pendente > 0 ? 'text-amber-700' : ''} />
-                  <div className="my-1 border-t border-stone-100" />
-                  <Linha rotulo="Entradas" valor={t.entradas} />
-                  <Linha rotulo="Saldo" valor={t.saldo} forte destaque={t.saldo < 0 ? 'text-red-700' : ''} />
-                </>
-              )}
-            </Card>
-          )
-        })}
-
-        {compartilhadas.map((c) => {
-          const daConta = todos.filter((l) => l.conta_id === c.id)
-          const t = calcularTotais(daConta)
-          return (
-            <Card key={c.id} titulo={c.nome} cor={c.cor} para={`/conta/${c.id}`}>
-              {t.saidas === 0 ? (
-                <Vazio />
-              ) : (
-                <>
-                  <Linha rotulo="Total do mês" valor={t.saidas} forte />
-                  <Linha rotulo="Pendente" valor={t.pendente} destaque={t.pendente > 0 ? 'text-amber-700' : ''} />
-                  <div className="my-1 border-t border-stone-100" />
-                  {listaMembros.map((m) => (
-                    <Linha
-                      key={m.id}
-                      rotulo={`Parte de ${m.nome}`}
-                      valor={calcularTotais(daConta.filter((l) => l.membro_id === m.id)).saidas}
-                    />
-                  ))}
-                </>
-              )}
-            </Card>
-          )
-        })}
-      </div>
-
       <AlertaLimites lancamentos={todos} categorias={categorias.data ?? []} />
+      <Atalhos contas={listaContas} />
+      <TransacoesRecentes lancamentos={doMes} categorias={categorias.data ?? []} membros={listaMembros} />
+      <Link
+        to="/graficos"
+        className="flex min-h-14 items-center gap-3 rounded-2xl border border-stone-200 bg-superficie px-4 shadow-sm hover:border-stone-300"
+      >
+        <IconeGrafico className="size-6 text-marca-700" />
+        <span className="flex flex-1 flex-col">
+          <span className="font-medium">Análise do mês</span>
+          <span className="text-xs text-stone-500">
+            Ritmo de gastos, mapa de calor e categorias{nomePessoa ? ` de ${nomePessoa}` : ''}
+          </span>
+        </span>
+        <span aria-hidden className="text-stone-500">
+          ›
+        </span>
+      </Link>
+    </div>
+  )
+}
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <CartaoMapaDeCalor lancamentos={doMes} />
-        <TransacoesRecentes lancamentos={doMes} categorias={categorias.data ?? []} membros={listaMembros} />
+/**
+ * O número que importa primeiro: quanto ainda falta pagar no mês.
+ * Abaixo: pago, entradas e saldo; a comparação com o mês passado; e as contas compartilhadas.
+ */
+function CartaoDoMes({
+  lancamentos,
+  anteriores,
+  todos,
+  membros,
+  contas,
+  compartilhadas,
+  pessoa,
+  setPessoa,
+}: {
+  lancamentos: Lancamento[]
+  anteriores: Lancamento[]
+  todos: Lancamento[]
+  membros: Membro[]
+  contas: Conta[]
+  compartilhadas: Conta[]
+  pessoa: string
+  setPessoa: (p: string) => void
+}) {
+  const { competencia } = useCompetencia()
+  const { membro: eu } = useMembroAtual()
+  const [escolhendo, setEscolhendo] = useState(false)
+  const t = calcularTotais(lancamentos)
+  const ehMesAtual = competencia === competenciaAtual()
+  const porDia = gastoPorDia(lancamentos, competencia)
+  const r = ritmo(porDia, gastoPorDia(anteriores, somarMeses(competencia, -1)), ehMesAtual ? diaDe(hoje()) : porDia.length)
+  const mesAnterior = nomeCurtoDoMes(somarMeses(competencia, -1))
+  const nome = membros.find((m) => m.id === pessoa)?.nome
+  const titulo = pessoa === 'todos' ? 'Mês de vocês' : pessoa === eu?.id ? 'Seu mês' : `Mês de ${nome}`
+  const principal = pessoa === 'todos' ? undefined : contaPrincipalDe(contas, pessoa)
+
+  return (
+    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setEscolhendo(true)}
+          aria-label={`${titulo}. Trocar de quem ver`}
+          className="-my-2 -ml-2 flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-stone-600 hover:bg-stone-100"
+        >
+          {titulo}
+          <span aria-hidden className="text-xs">
+            ▾
+          </span>
+        </button>
+        {principal && (
+          <Link
+            to={`/conta/${principal.id}`}
+            className="-my-2 -mr-2 flex min-h-11 items-center rounded-lg px-2 text-sm font-medium text-marca-700 hover:bg-marca-50"
+          >
+            Ver contas ›
+          </Link>
+        )}
       </div>
-      <PrincipaisCategorias atual={doMes} anterior={doMesAnterior} categorias={categorias.data ?? []} />
+
+      {t.saidas === 0 && t.entradas === 0 ? (
+        <p className="mt-2 text-sm text-stone-500">Nada lançado neste mês ainda. Use o + para começar.</p>
+      ) : (
+        <>
+          <p className="mt-2 text-sm text-stone-600">{t.pendente > 0 ? 'Falta pagar' : 'Tudo pago'}</p>
+          <p className={`text-4xl font-bold tracking-tight ${t.pendente > 0 ? '' : 'text-emerald-700'}`}>
+            {formatarCentavos(t.pendente)}
+          </p>
+          <dl className="mt-3 flex flex-wrap justify-between gap-x-4 gap-y-2 text-sm">
+            <Numero rotulo="Já pago" valor={t.pago} />
+            <Numero rotulo="Entradas" valor={t.entradas} />
+            <Numero rotulo="Saldo" valor={t.saldo} tom={t.saldo < 0 ? 'text-red-700' : undefined} />
+          </dl>
+          {r.percentual !== null && r.percentual !== 0 && (
+            <p className="mt-3 text-sm text-stone-600">
+              <span className={`font-semibold ${r.percentual > 0 ? 'text-red-700' : 'text-emerald-700'}`}>
+                {r.percentual > 0 ? '▲' : '▼'} {Math.abs(r.percentual)}%
+              </span>{' '}
+              de gasto vs o mesmo ponto de {mesAnterior}
+            </p>
+          )}
+        </>
+      )}
+
+      {compartilhadas.length > 0 && (
+        <ul className="mt-3 divide-y divide-stone-100 border-t border-stone-100">
+          {compartilhadas.map((c) => {
+            const daConta = todos.filter((l) => l.conta_id === c.id)
+            const total = calcularTotais(daConta).saidas
+            const parte = pessoa === 'todos' ? null : calcularTotais(daConta.filter((l) => l.membro_id === pessoa)).saidas
+            return (
+              <li key={c.id}>
+                <Link to={`/conta/${c.id}`} className="flex min-h-12 items-center gap-2 py-2 text-sm">
+                  <Bolinha cor={c.cor} />
+                  <span className="flex-1 font-medium">{c.nome}</span>
+                  <span className="text-right text-stone-600 tabular-nums">
+                    {parte !== null ? (
+                      <>
+                        sua parte <span className="font-semibold text-stone-900">{formatarCentavos(parte)}</span>
+                        <span className="block text-xs">de {formatarCentavos(total)}</span>
+                      </>
+                    ) : (
+                      <span className="font-semibold text-stone-900">{formatarCentavos(total)}</span>
+                    )}
+                  </span>
+                  <span aria-hidden className="text-stone-500">
+                    ›
+                  </span>
+                </Link>
+              </li>
+            )
+          })}
+        </ul>
+      )}
+
+      <Folha aberta={escolhendo} onFechar={() => setEscolhendo(false)} titulo="Ver o mês de quem?">
+        <EscolhaFiltro
+          rotulo="De quem"
+          valor={pessoa}
+          onChange={(v) => {
+            setPessoa(v)
+            setEscolhendo(false)
+          }}
+          opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...membros.map((m) => ({ valor: m.id, texto: m.nome }))]}
+        />
+      </Folha>
+    </section>
+  )
+}
+
+function Numero({ rotulo, valor, tom }: { rotulo: string; valor: number; tom?: string }) {
+  return (
+    <div>
+      <dt className="text-xs text-stone-500">{rotulo}</dt>
+      <dd className={`font-semibold whitespace-nowrap tabular-nums ${tom ?? ''}`}>{formatarCentavos(valor)}</dd>
     </div>
   )
 }
@@ -273,209 +352,6 @@ function AlertaLimites({ lancamentos, categorias }: { lancamentos: Lancamento[];
   )
 }
 
-function Vazio() {
-  return <p className="text-sm text-stone-500">Nenhum lançamento neste mês.</p>
-}
-
-function Linha({
-  rotulo,
-  valor,
-  destaque = '',
-  forte,
-}: {
-  rotulo: string
-  valor: number
-  destaque?: string
-  forte?: boolean
-}) {
-  return (
-    <div className={`flex items-baseline justify-between text-sm ${forte ? '' : 'text-stone-600'}`}>
-      <span>{rotulo}</span>
-      <span className={`tabular-nums ${forte ? 'font-semibold' : ''} ${destaque}`}>{formatarCentavos(valor)}</span>
-    </div>
-  )
-}
-
-function Card({
-  titulo,
-  cor,
-  para,
-  children,
-}: {
-  titulo: string
-  cor: string | null
-  para?: string
-  children: ReactNode
-}) {
-  const conteudo = (
-    <>
-      <div className="mb-3 flex items-center gap-2">
-        <Bolinha cor={cor} />
-        <span className="font-semibold">{titulo}</span>
-      </div>
-      <div className="flex flex-col gap-1">{children}</div>
-    </>
-  )
-  const classe =
-    'block rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm transition-colors hover:border-stone-300'
-  return para ? (
-    <Link to={para} className={classe} aria-label={`Resumo de ${titulo}`}>
-      {conteudo}
-    </Link>
-  ) : (
-    <div className={classe}>{conteudo}</div>
-  )
-}
-
-function Painel({
-  titulo,
-  link,
-  children,
-}: {
-  titulo: string
-  link?: { texto: string; para: string }
-  children: ReactNode
-}) {
-  return (
-    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
-      <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
-        {link && (
-          <Link to={link.para} className="text-sm font-medium text-marca-700">
-            {link.texto} ↗
-          </Link>
-        )}
-      </div>
-      <div className="mt-3">{children}</div>
-    </section>
-  )
-}
-
-/** "Como está o mês": gasto até hoje vs o mesmo ponto do mês passado, com a curva do mês */
-function RitmoDoMes({
-  atual,
-  anterior,
-  categorias,
-  nome,
-}: {
-  atual: Lancamento[]
-  anterior: Lancamento[]
-  categorias: Categoria[]
-  nome?: string
-}) {
-  const { competencia } = useCompetencia()
-  const { membro: eu } = useMembroAtual()
-  const ehMesAtual = competencia === competenciaAtual()
-  const ehFuturo = competencia > competenciaAtual()
-  const porDia = gastoPorDia(atual, competencia)
-  const porDiaAnterior = gastoPorDia(anterior, somarMeses(competencia, -1))
-  // No mês atual compara até hoje; em meses passados, o mês inteiro
-  const diaHoje = ehMesAtual ? diaDe(hoje()) : porDia.length
-  const r = ritmo(porDia, porDiaAnterior, diaHoje)
-  const maior = comparativoCategorias(atual, [], categorias)[0]
-  const ehEu = Boolean(nome) && nome === eu?.nome
-  const doMes = ehEu ? 'o seu mês' : nome ? `o mês de ${nome}` : 'o mês de vocês'
-  const previstoNoMes = porDia.reduce((s, v) => s + v, 0)
-  const mesAnterior = nomeCurtoDoMes(somarMeses(competencia, -1))
-
-  const frase =
-    r.percentual === null
-      ? r.atual === 0
-        ? previstoNoMes > 0
-          ? `Até hoje nada saiu. Previsto para o mês: ${formatarCentavos(previstoNoMes)}.`
-          : 'Nenhum gasto lançado ainda neste mês.'
-        : porDiaAnterior.some((v) => v > 0)
-          ? `Até agora, ${formatarCentavos(r.atual)}. No mesmo ponto de ${mesAnterior} ainda não tinha gasto nada.`
-          : `Primeiro mês com gastos para comparar. Até agora, ${formatarCentavos(r.atual)}.`
-      : `${ehEu ? 'Você' : (nome ?? 'Vocês')} ${ehMesAtual ? (nome ? 'começou' : 'começaram') : nome ? 'fechou' : 'fecharam'} o mês gastando ${Math.abs(r.percentual)}% ${
-          r.percentual <= 0 ? 'menos' : 'mais'
-        } que ${ehMesAtual ? `no mesmo ponto de ${mesAnterior}` : `em ${mesAnterior}`}.${
-          r.percentual <= -10 ? ' Bom ritmo!' : r.percentual >= 10 ? ' Vale ficar de olho.' : ''
-        }`
-
-  const acumAtual = acumulado(porDia).map((v, i) => (i < diaHoje ? v : null))
-  const acumAnterior = acumulado(porDiaAnterior)
-
-  return (
-    <section aria-label="Como está o mês" className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
-      <p className="text-lg font-semibold text-marca-700">Oi, {eu?.nome ?? 'tudo bem'}! Como está {doMes}?</p>
-      <p className="mt-1 text-sm text-stone-700">{ehFuturo ? 'Este mês ainda não começou: aparecem só as contas fixas e parcelas já previstas.' : frase}</p>
-
-      <div className="mt-3 grid grid-cols-3 gap-2">
-        <MiniNumero rotulo={ehMesAtual ? 'Gasto até hoje' : `Gasto em ${nomeCurtoDoMes(competencia)}`} valor={formatarCentavos(r.atual)} />
-        <MiniNumero
-          rotulo={`vs ${mesAnterior}`}
-          valor={r.percentual === null ? '—' : `${r.percentual > 0 ? '▲' : r.percentual < 0 ? '▼' : ''} ${Math.abs(r.percentual)}%`}
-          tom={r.percentual === null || r.percentual === 0 ? undefined : r.percentual < 0 ? 'text-emerald-700' : 'text-red-700'}
-        />
-        <MiniNumero
-          rotulo="Maior gasto"
-          valor={maior && maior.atual > 0 ? `${maior.icone ?? ''} ${maior.nome}` : '—'}
-          detalhe={maior && maior.atual > 0 ? formatarCentavos(maior.atual) : undefined}
-        />
-      </div>
-
-      <div className="mt-4 border-t border-stone-100 pt-3">
-        <div className="mb-2 flex items-baseline justify-between gap-2">
-          <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">Ritmo de gastos</h2>
-          {r.percentual !== null && (
-            <span className="text-xs text-stone-500">
-              {formatarCentavos(Math.abs(r.diferenca))} {r.diferenca <= 0 ? 'abaixo' : 'acima'} de {mesAnterior}
-            </span>
-          )}
-        </div>
-        <GraficoLinhas
-          titulo="Gasto acumulado dia a dia: este mês e o mês passado"
-          tituloDica={(i) => `Até o dia ${i + 1}`}
-          series={[
-            { nome: 'Este mês', cor: '#0d9488', valores: acumAtual },
-            { nome: 'Mês passado', cor: 'var(--color-stone-400)', valores: acumAnterior },
-          ]}
-        />
-      </div>
-    </section>
-  )
-}
-
-function MiniNumero({ rotulo, valor, detalhe, tom }: { rotulo: string; valor: string; detalhe?: string; tom?: string }) {
-  return (
-    <div className="min-w-0 rounded-xl bg-stone-50 p-2.5">
-      <p className="text-xs leading-tight font-medium text-stone-500 uppercase">{rotulo}</p>
-      <p className={`mt-1 truncate text-sm font-semibold ${tom ?? 'text-stone-900'}`}>{valor}</p>
-      {detalhe && <p className="truncate text-xs text-stone-500">{detalhe}</p>}
-    </div>
-  )
-}
-
-function CartaoMapaDeCalor({ lancamentos }: { lancamentos: Lancamento[] }) {
-  const { competencia } = useCompetencia()
-  const porDia = gastoPorDia(lancamentos, competencia)
-  const total = porDia.reduce((s, v) => s + v, 0)
-  const ehMesAtual = competencia === competenciaAtual()
-  const diasPassados = ehMesAtual ? diaDe(hoje()) : porDia.length
-  const maior = porDia.reduce((m, v, i) => (v > porDia[m] ? i : m), 0)
-
-  return (
-    <Painel titulo="Mapa de calor" link={{ texto: 'ver gráficos', para: '/graficos' }}>
-      <p className="text-2xl font-semibold tracking-tight">{formatarCentavos(total)}</p>
-      <p className="mb-3 text-xs text-stone-500">
-        Média por dia: <span className="font-semibold text-stone-900">{formatarCentavos(Math.round(total / Math.max(1, diasPassados)))}</span>
-        {porDia[maior] > 0 && (
-          <>
-            {' · '}maior gasto no dia {maior + 1} ({formatarCentavos(porDia[maior])})
-          </>
-        )}
-      </p>
-      <MapaDeCalor
-        titulo="Gasto de cada dia do mês"
-        valores={porDia}
-        inicioSemana={diaDaSemanaDoInicio(competencia)}
-        diaDestaque={ehMesAtual ? diaDe(hoje()) : undefined}
-      />
-    </Painel>
-  )
-}
-
 function TransacoesRecentes({
   lancamentos,
   categorias,
@@ -533,81 +409,13 @@ function TransacoesRecentes({
   )
 }
 
-/** Tabela: cada categoria neste mês e no anterior */
-function PrincipaisCategorias({
-  atual,
-  anterior,
-  categorias,
-}: {
-  atual: Lancamento[]
-  anterior: Lancamento[]
-  categorias: Categoria[]
-}) {
-  const { competencia } = useCompetencia()
-  const linhas = comparativoCategorias(atual, anterior, categorias).filter((c) => c.atual > 0).slice(0, 8)
-  const maior = Math.max(0, ...linhas.map((c) => Math.max(c.atual, c.anterior)))
-  const mesAnterior = nomeCurtoDoMes(somarMeses(competencia, -1))
-
-  return (
-    <Painel titulo="Principais categorias" link={{ texto: 'ver mais', para: '/graficos' }}>
-      {linhas.length === 0 ? (
-        <p className="text-sm text-stone-500">Nenhum gasto neste mês.</p>
-      ) : (
-        <>
-          <ul className="flex flex-col gap-3">
-            {linhas.map((c) => (
-              <li key={c.chave}>
-                <div className="flex items-baseline justify-between gap-2 text-sm">
-                  <span className="min-w-0 truncate">
-                    {c.icone ? `${c.icone} ` : ''}
-                    {c.nome}
-                  </span>
-                  <span className="shrink-0 font-semibold tabular-nums">{formatarCentavos(c.atual)}</span>
-                </div>
-                {/* Barra cheia = este mês; tracinho = onde estava no mês anterior */}
-                <div className="relative mt-1 h-2 rounded-full bg-stone-100" aria-hidden>
-                  <div
-                    className="h-full rounded-full bg-marca-600"
-                    style={{ width: `${maior > 0 ? Math.max(2, (c.atual / maior) * 100) : 0}%` }}
-                  />
-                  {c.anterior > 0 && (
-                    <div
-                      className="absolute -top-0.5 h-3 w-0.5 rounded bg-stone-500"
-                      style={{ left: `calc(${(c.anterior / maior) * 100}% - 1px)` }}
-                    />
-                  )}
-                </div>
-                <p className="mt-0.5 text-xs text-stone-500">
-                  {c.variacao === null ? (
-                    `nada em ${mesAnterior}`
-                  ) : (
-                    <>
-                      <span className={c.variacao > 0 ? 'text-red-700' : c.variacao < 0 ? 'text-emerald-700' : ''}>
-                        {c.variacao > 0 ? '▲' : c.variacao < 0 ? '▼' : ''} {Math.abs(c.variacao)}%
-                      </span>{' '}
-                      vs {formatarCentavos(c.anterior)} em {mesAnterior}
-                    </>
-                  )}
-                </p>
-              </li>
-            ))}
-          </ul>
-          <p className="mt-3 flex items-center gap-1.5 text-xs text-stone-500">
-            <span aria-hidden className="inline-block h-3 w-0.5 rounded bg-stone-500" /> = quanto foi em {mesAnterior}
-          </p>
-        </>
-      )}
-    </Painel>
-  )
-}
-
 /** Atalhos do Início: ir para as abas de quem entrou e lançar sem trocar de tela */
 function Atalhos({ contas }: { contas: Conta[] }) {
   const { membro: eu } = useMembroAtual()
   const novo = useNovoLancamento()
   const { minhas, compartilhadas } = abasDoMembro(contas, eu?.id)
   const classeLink =
-    'flex shrink-0 items-center gap-2 rounded-2xl border border-stone-200 bg-superficie px-3 py-2.5 text-sm font-medium shadow-sm hover:border-stone-300'
+    'flex min-h-11 shrink-0 items-center gap-2 rounded-2xl border border-stone-200 bg-superficie px-3 text-sm font-medium shadow-sm hover:border-stone-300'
   const classeAcao =
     'flex flex-col items-center gap-1 rounded-2xl bg-marca-50 px-2 py-3 text-xs font-semibold text-marca-700 hover:bg-marca-100'
   return (
@@ -625,21 +433,15 @@ function Atalhos({ contas }: { contas: Conta[] }) {
       </div>
       <div className="grid grid-cols-3 gap-2">
         <button type="button" onClick={() => novo('avulso')} className={classeAcao}>
-          <span aria-hidden className="text-xl">
-            🧾
-          </span>
+          <IconeRecibo />
           Gasto ou entrada
         </button>
         <button type="button" onClick={() => novo('fixa')} className={classeAcao}>
-          <span aria-hidden className="text-xl">
-            🔁
-          </span>
+          <IconeRepetir />
           Conta fixa
         </button>
         <button type="button" onClick={() => novo('parcelada')} className={classeAcao}>
-          <span aria-hidden className="text-xl">
-            💳
-          </span>
+          <IconeCartao />
           Parcelado
         </button>
       </div>
