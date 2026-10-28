@@ -69,6 +69,14 @@ export default function Fixas() {
         })}
       </div>
 
+      <button
+        type="button"
+        onClick={() => setNova(true)}
+        className="flex min-h-12 items-center justify-center rounded-2xl border border-dashed border-stone-300 text-sm font-semibold text-marca-700 hover:bg-marca-50"
+      >
+        + Nova conta fixa
+      </button>
+
       {grupos.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-stone-300 bg-superficie p-5 text-center text-sm text-stone-600">
           <p className="font-medium text-stone-900">Nenhuma conta fixa ainda</p>
@@ -101,20 +109,6 @@ export default function Fixas() {
           {(r) => `até ${nomeCurtoDoMes(r.fim!, true)}`}
         </ListaSimples>
       )}
-
-      <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-20">
-        <div className="mx-auto flex max-w-3xl justify-end px-4">
-          <button
-            onClick={() => setNova(true)}
-            className="pointer-events-auto flex h-12 items-center gap-2 rounded-full bg-marca-600 px-5 font-semibold text-white shadow-lg active:scale-[0.98]"
-          >
-            <span aria-hidden className="text-xl leading-none">
-              +
-            </span>
-            Nova conta fixa
-          </button>
-        </div>
-      </div>
 
       <NovoLancamento
         aberto={nova}

@@ -14,7 +14,6 @@ import {
 } from '../lib/totais.ts'
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
 import {
-  BotaoAdicionar,
   ItemGrupo,
   ItemLancamento,
   PainelTotais,
@@ -101,7 +100,7 @@ function Cabecalho({
         <button
           type="button"
           onClick={() => setEditando(true)}
-          className="shrink-0 rounded-lg px-2 py-1 text-sm font-medium text-stone-500 hover:bg-stone-100"
+          className="-mt-2 -mr-2 min-h-11 shrink-0 rounded-lg px-3 text-sm font-medium text-stone-600 hover:bg-stone-100"
         >
           Editar aba
         </button>
@@ -150,7 +149,7 @@ function Secao({
               key={a.texto}
               type="button"
               onClick={a.onClick}
-              className="flex h-10 flex-1 items-center justify-center rounded-xl border border-dashed border-stone-300 text-sm font-semibold text-marca-700 hover:bg-marca-50"
+              className="flex h-11 flex-1 items-center justify-center rounded-xl border border-dashed border-stone-300 text-sm font-semibold text-marca-700 hover:bg-marca-50"
             >
               + {a.texto}
             </button>
@@ -302,11 +301,23 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
         subtotal={calcularTotais(pessoais).saidas}
         vazio="Nenhum gasto ou entrada neste mês."
         acoes={[
-          { texto: 'Conta fixa', onClick: () => setEdicao({ tipo: 'recorrente', conta }) },
+          { texto: 'Gasto', onClick: () => setEdicao({ tipo: 'novo' }) },
+          { texto: 'Fixa', onClick: () => setEdicao({ tipo: 'recorrente', conta }) },
           { texto: 'Parcelada', onClick: () => setEdicao({ tipo: 'compra', conta }) },
         ]}
       >
-        {pessoais.map((l) => item(l, conta))}
+        {[
+          ...pessoais.filter((l) => l.tipo === 'saida').map((l) => item(l, conta)),
+          // Entradas separadas dos gastos, no fim da seção
+          ...(pessoais.some((l) => l.tipo === 'entrada')
+            ? [
+                <li key="titulo-entradas" className="pt-3 pb-1 text-xs font-semibold tracking-wide text-stone-500 uppercase">
+                  Entradas
+                </li>,
+                ...pessoais.filter((l) => l.tipo === 'entrada').map((l) => item(l, conta)),
+              ]
+            : []),
+        ]}
       </Secao>
 
       {outrasAbas.map((c) => {
@@ -323,7 +334,6 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
         )
       })}
 
-      <BotaoAdicionar texto="Gasto ou entrada" onClick={() => setEdicao({ tipo: 'novo' })} />
 
       <FormLancamentoPessoal
         aberto={edicao?.tipo === 'novo' || edicao?.tipo === 'pessoal'}
@@ -429,6 +439,7 @@ function PaginaCompartilhada({ conta, contas, membros, lancamentos, categorias }
         titulo="Gastos avulsos"
         subtotal={somar(avulsos.map((g) => g.total))}
         vazio="Nenhum gasto avulso neste mês."
+        acoes={[{ texto: 'Novo gasto', onClick: () => setEdicao({ tipo: 'novo' }) }]}
       >
         {avulsos.map((g) => (
           <ItemGrupo
@@ -443,8 +454,6 @@ function PaginaCompartilhada({ conta, contas, membros, lancamentos, categorias }
           />
         ))}
       </Secao>
-
-      <BotaoAdicionar texto={`Gasto em ${conta.nome}`} onClick={() => setEdicao({ tipo: 'novo' })} />
 
       {edicao?.tipo === 'novo' && (
         <FormGastoCompartilhado

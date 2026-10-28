@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react'
-import { NavLink, Outlet, useLocation } from 'react-router-dom'
+import { NavLink, Outlet, useLocation, useMatch } from 'react-router-dom'
 import { useMembroAtual, useTodasContas } from '../hooks/useDados.ts'
 import { useTempoReal } from '../hooks/useTempoReal.ts'
 import { PessoaProvider } from '../hooks/usePessoa.tsx'
@@ -16,6 +16,10 @@ export function Layout() {
   useTempoReal(Boolean(membro))
 
   const abas = abasDoMembro(contas.data ?? [], membro?.id)
+  // O + já sabe onde você está: dentro de uma aba começa nela; em Contas fixas, em "todo mês"
+  const naConta = useMatch('/conta/:id')?.params.id
+  const contaAberta = (contas.data ?? []).find((c) => c.id === naConta && !c.arquivada)
+  const emFixas = useMatch('/fixas') !== null
   const ordemParaLancar = [...abas.minhas, ...abas.compartilhadas, ...abas.dosOutros]
 
   return (
@@ -23,19 +27,14 @@ export function Layout() {
       <NovoLancamentoContexto.Provider value={(tipo) => setNovo({ tipo })}>
         <div className="flex min-h-dvh flex-col">
           <header className="sticky top-0 z-10 border-b border-stone-200 bg-superficie/95 pt-[env(safe-area-inset-top)] backdrop-blur">
-            <div className="mx-auto max-w-3xl px-4">
-              <div className="flex h-12 items-center justify-between">
-                <span className="font-bold tracking-tight">Contas da Casa</span>
-                {membro && (
-                  <span className="flex items-center gap-1.5 text-sm text-stone-600">
-                    <Bolinha cor={membro.cor} />
-                    {membro.nome}
-                  </span>
-                )}
-              </div>
-              <div className="pb-2">
-                <SeletorMes />
-              </div>
+            <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-2 px-2">
+              <SeletorMes />
+              {membro && (
+                <span className="flex shrink-0 items-center gap-1.5 pr-2 text-sm text-stone-600">
+                  <Bolinha cor={membro.cor} />
+                  {membro.nome}
+                </span>
+              )}
             </div>
           </header>
 
@@ -43,13 +42,14 @@ export function Layout() {
             <Outlet />
           </main>
 
-          <BarraDeBaixo onNovo={() => setNovo({})} />
+          <BarraDeBaixo onNovo={() => setNovo({ tipo: emFixas ? 'fixa' : undefined })} />
 
           <NovoLancamento
             aberto={novo !== null}
             onFechar={() => setNovo(null)}
             contas={ordemParaLancar}
             tipo={novo?.tipo}
+            contaInicial={contaAberta}
           />
         </div>
       </NovoLancamentoContexto.Provider>
