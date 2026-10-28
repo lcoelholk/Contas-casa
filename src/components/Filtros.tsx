@@ -52,7 +52,7 @@ export function BarraFiltros({
                 type="button"
                 onClick={f.onRemover}
                 aria-label={`Tirar filtro ${f.texto}`}
-                className="flex items-center gap-1 rounded-full bg-marca-50 py-1 pr-2 pl-3 text-sm font-medium text-marca-900 hover:bg-marca-100"
+                className="relative flex items-center gap-1 rounded-full bg-marca-50 py-1 pr-2 pl-3 text-sm font-medium text-marca-900 before:absolute before:-inset-y-2 before:inset-x-0 before:content-[''] hover:bg-marca-100"
               >
                 {f.texto}
                 <span aria-hidden className="text-marca-700">
@@ -66,7 +66,7 @@ export function BarraFiltros({
               <button
                 type="button"
                 onClick={onLimpar}
-                className="rounded-full px-3 py-1 text-sm font-medium text-stone-500 hover:bg-stone-100"
+                className="min-h-11 rounded-full px-3 text-sm font-medium text-stone-600 hover:bg-stone-100"
               >
                 Limpar tudo
               </button>
@@ -132,7 +132,7 @@ function BotaoBarra({ onClick, ativo, children }: { onClick: () => void; ativo?:
     <button
       type="button"
       onClick={onClick}
-      className={`flex h-10 min-w-0 items-center gap-2 rounded-full border px-4 text-sm font-medium shadow-sm ${
+      className={`flex h-11 min-w-0 items-center gap-2 rounded-full border px-4 text-sm font-medium shadow-sm ${
         ativo ? 'border-marca-600 bg-superficie text-marca-700' : 'border-stone-200 bg-superficie text-stone-700'
       }`}
     >
@@ -164,7 +164,7 @@ export function EscolhaFiltro<T extends string>({
             role="radio"
             aria-checked={o.valor === valor}
             onClick={() => onChange(o.valor)}
-            className={`min-h-10 rounded-full border px-3.5 text-sm font-medium ${
+            className={`min-h-11 rounded-full border px-3.5 text-sm font-medium ${
               o.valor === valor
                 ? 'border-marca-600 bg-marca-600 text-white'
                 : 'border-stone-200 bg-superficie text-stone-700 hover:bg-stone-50'

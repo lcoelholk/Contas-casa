@@ -24,7 +24,8 @@ export function CheckPago({
       role="checkbox"
       aria-checked={pago}
       aria-label={rotulo}
-      className={`flex ${medida} shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
+      // A bolinha é pequena, mas a área de toque tem 44px (::before invisível em volta)
+      className={`relative flex ${medida} shrink-0 items-center justify-center rounded-full border-2 transition-colors before:absolute before:-inset-2.5 before:content-[''] ${
         pago ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-stone-300 bg-superficie text-transparent hover:border-emerald-500'
       }`}
     >
@@ -90,7 +91,7 @@ export function ItemLancamento({
         onClick={onAlternarPago}
         rotulo={`${l.descricao}: ${entrada ? (l.pago ? 'recebido' : 'marcar como recebido') : l.pago ? 'pago' : 'marcar como pago'}`}
       />
-      <button type="button" onClick={onAbrir} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+      <button type="button" onClick={onAbrir} className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className={`truncate font-medium ${l.pago && !entrada ? 'text-stone-500' : ''}`}>{l.descricao}</span>
           <Detalhes
@@ -138,7 +139,7 @@ export function ItemGrupo({
   const todosPagos = linhas.every((l) => l.pago)
   return (
     <li className="py-3">
-      <button type="button" onClick={onAbrir} className="flex w-full items-start gap-3 text-left">
+      <button type="button" onClick={onAbrir} className="flex min-h-11 w-full items-start gap-3 text-left">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className={`truncate font-medium ${todosPagos ? 'text-stone-500' : ''}`}>{base.descricao}</span>
           <Detalhes
@@ -233,22 +234,5 @@ export function PainelTotaisCompartilhada({
         ))}
       </div>
     </section>
-  )
-}
-
-/** Botão fixo no canto para adicionar */
-export function BotaoAdicionar({ texto, onClick }: { texto: string; onClick: () => void }) {
-  return (
-    <div className="pointer-events-none fixed inset-x-0 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-20">
-      <div className="mx-auto flex max-w-3xl justify-end px-4">
-        <button
-          onClick={onClick}
-          className="pointer-events-auto flex h-12 items-center gap-2 rounded-full bg-marca-600 px-5 font-semibold text-white shadow-lg active:scale-[0.98]"
-        >
-          <span aria-hidden className="text-xl leading-none">+</span>
-          {texto}
-        </button>
-      </div>
-    </div>
   )
 }

@@ -65,22 +65,23 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 
 ### Navegação
 - **Barra fixa embaixo:** Início · Transações · **(+)** · Análises · Mais
-- **(+)** abre "novo lançamento" de qualquer tela: escolhe a aba (as de quem entrou primeiro) e o tipo (só desta vez, todo mês, parcelado)
+- **(+)** abre "novo lançamento" de qualquer tela: escolhe a aba (as de quem entrou primeiro) e o tipo (só desta vez, todo mês, parcelado). **Sabe onde você está:** dentro de uma aba já começa nela; em Contas fixas já começa em "todo mês". É o **único** botão flutuante (nada de outros botões fixos por cima da lista); dentro das seções ficam só os atalhos tracejados ("+ Gasto", "+ Fixa", "+ Parcelada")
+- **Cabeçalho numa linha:** ‹ mês › à esquerda (com "Hoje" quando estiver em outro mês) e quem entrou à direita
+- **Toque mínimo de 44px** em tudo que é clicável (o círculo de pago tem área de toque maior que o desenho)
+- **Dinheiro nunca é cortado** com "…" nem quebrado no meio do número; ícones de ação em traço (`src/components/icones.tsx`), emoji só nas categorias
 - **Análises** = Gráficos + Metas e limites (alternados no topo)
 - **Mais:** suas contas (a sua aba e as compartilhadas), Contas fixas, Nova conta, Ajustes, as abas do outro ("Do outro") e Sair
 - **Filtros e ordenação ficam escondidos:** cada tela com filtro mostra só os botões **Filtrar** e **Ordenar** (`BarraFiltros` em `src/components/Filtros.tsx`). Filtrar abre um painel com as opções em etiquetas; os filtros ligados aparecem como etiquetas com ✕ (e "Limpar tudo"). Vale para Início, Transações e Gráficos.
 - **Cada um vê primeiro o que é seu:** o filtro de pessoa (Início, Transações, Gráficos) começa em quem entrou e vale para todas as telas até sair do app (`usePessoa`); um toque troca para "Os dois". Os dados continuam compartilhados (RLS igual).
 
 ### Início (antigo "Resumo"/"Visão geral")
-- Atalhos: ir para "Minhas contas" e as compartilhadas, e lançar gasto, conta fixa ou parcelado sem trocar de tela
-- Filtro de pessoa no topo; cards de pessoa e vencimentos seguem o filtro
-- **Como está o mês:** frase comparando o gasto até hoje com o mesmo ponto do mês passado, gasto até hoje, variação % e maior categoria
-- **Ritmo de gastos:** linha do gasto acumulado dia a dia, este mês vs mês passado
-- Lista **"Vence nos próximos 7 dias"** e **atrasados** (não pagos, dos dois)
-- Card por membro (a pagar, pago, pendente, entradas, saldo) e card de cada conta compartilhada
+Responde primeiro "quanto ainda falta pagar este mês?". De cima para baixo:
+- **Cartão do mês:** "Seu mês ▾" (toque troca para os dois ou a outra pessoa), **Falta pagar** em destaque, já pago / entradas / saldo, a variação do gasto vs o mesmo ponto do mês passado e as contas compartilhadas (sua parte de cada uma)
+- **Atrasados** e **vence nos próximos 7 dias**
 - Aviso de limite de gastos perto ou estourado
-- **Mapa de calor:** calendário do mês com a cor de cada dia pelo quanto foi gasto
-- **Transações recentes** (últimas lançadas no mês) e **principais categorias** vs mês anterior
+- Atalhos: "Minhas contas", compartilhadas e lançar gasto, conta fixa ou parcelado
+- **Transações recentes** (últimas lançadas no mês)
+- Link para a **análise do mês** (em Análises)
 - "Data" de um lançamento (para ritmo, mapa e listas) = vencimento, senão quando foi pago, senão quando foi lançado; fora do mês da competência vira o dia 1 (`dataDoLancamento` em `src/lib/visaoGeral.ts`)
 
 ### Transações (tela "Transações")
@@ -119,6 +120,7 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 
 ### Gráficos (tela "Gráficos")
 - Filtros no topo: período (3, 6 ou 12 meses, terminando no mês do seletor) e pessoa (os dois, Lucas, Emillia)
+- **Este mês** (`AnaliseDoMes`): ritmo de gastos (linha acumulada vs mês passado), mapa de calor dos dias e categorias vs mês anterior
 - Números do período: gasto do mês vs média dos anteriores, gasto médio, entrada média, quanto sobrou das entradas
 - Entradas e gastos mês a mês (colunas; tocar mostra o saldo)
 - Gastos por categoria no período; tocar numa categoria mostra a evolução dela mês a mês

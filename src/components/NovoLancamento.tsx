@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
+import { IconeCartao, IconeRecibo, IconeRepetir } from './icones.tsx'
 import { useCompetencia } from '../hooks/useCompetencia.tsx'
 import { useMembroAtual, useMembros } from '../hooks/useDados.ts'
 import { Folha } from './Folha.tsx'
@@ -11,10 +12,10 @@ import type { Conta } from '../types/banco.ts'
 
 export type TipoNovo = 'avulso' | 'fixa' | 'parcelada'
 
-const TIPOS: { valor: TipoNovo; titulo: string; texto: string; icone: string }[] = [
-  { valor: 'avulso', titulo: 'Só desta vez', texto: 'Gasto ou entrada deste mês (mercado, uber, freela)', icone: '🧾' },
-  { valor: 'fixa', titulo: 'Todo mês', texto: 'Conta fixa ou salário (aluguel, academia, internet)', icone: '🔁' },
-  { valor: 'parcelada', titulo: 'Parcelado', texto: 'Compra em várias parcelas (geladeira, celular)', icone: '💳' },
+const TIPOS: { valor: TipoNovo; titulo: string; texto: string; icone: ReactNode }[] = [
+  { valor: 'avulso', titulo: 'Só desta vez', texto: 'Gasto ou entrada deste mês (mercado, uber, freela)', icone: <IconeRecibo /> },
+  { valor: 'fixa', titulo: 'Todo mês', texto: 'Conta fixa ou salário (aluguel, academia, internet)', icone: <IconeRepetir /> },
+  { valor: 'parcelada', titulo: 'Parcelado', texto: 'Compra em várias parcelas (geladeira, celular)', icone: <IconeCartao /> },
 ]
 
 /**
@@ -27,17 +28,22 @@ export function NovoLancamento({
   onFechar,
   contas,
   tipo: tipoFixo,
+  contaInicial,
 }: {
   aberto: boolean
   onFechar: () => void
   /** Abas ativas para escolher */
   contas: Conta[]
   tipo?: TipoNovo
+  /** Já começa nesta aba (ex.: o + apertado dentro da aba Casa) */
+  contaInicial?: Conta
 }) {
   const { competencia } = useCompetencia()
   const { membro: eu } = useMembroAtual()
   const membros = useMembros()
-  const [conta, setConta] = useState<Conta | null>(null)
+  const [contaEscolhida, setConta] = useState<Conta | null>(null)
+  const [trocandoConta, setTrocandoConta] = useState(false)
+  const conta = contaEscolhida ?? (trocandoConta ? null : (contaInicial ?? null))
   const [tipoEscolhido, setTipo] = useState<TipoNovo | null>(null)
   const tipo = tipoFixo ?? tipoEscolhido
   const lista = membros.data ?? []
@@ -45,6 +51,7 @@ export function NovoLancamento({
 
   const fechar = () => {
     setConta(null)
+    setTrocandoConta(false)
     setTipo(null)
     onFechar()
   }
@@ -85,7 +92,7 @@ export function NovoLancamento({
                 onClick={() => setTipo(t.valor)}
                 className="flex w-full items-center gap-3 rounded-xl border border-stone-200 px-3 py-3 text-left hover:bg-stone-50"
               >
-                <span aria-hidden className="text-2xl">
+                <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-marca-50 text-marca-700">
                   {t.icone}
                 </span>
                 <span className="flex flex-col">
@@ -98,8 +105,11 @@ export function NovoLancamento({
         </ul>
         <button
           type="button"
-          onClick={() => setConta(null)}
-          className="mt-3 h-10 w-full rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-100"
+          onClick={() => {
+            setConta(null)
+            setTrocandoConta(true)
+          }}
+          className="mt-3 h-11 w-full rounded-xl text-sm font-medium text-stone-600 hover:bg-stone-100"
         >
           ← Trocar a conta
         </button>

@@ -74,7 +74,7 @@ function Bloco({
         <button
           type="button"
           onClick={acao.onClick}
-          className="mt-3 flex h-10 w-full items-center justify-center rounded-xl border border-dashed border-stone-300 text-sm font-semibold text-marca-700 hover:bg-marca-50"
+          className="mt-3 flex h-11 w-full items-center justify-center rounded-xl border border-dashed border-stone-300 text-sm font-semibold text-marca-700 hover:bg-marca-50"
         >
           + {acao.texto}
         </button>
@@ -246,7 +246,7 @@ function CartaoMeta({
         <button
           type="button"
           onClick={onGuardar}
-          className="mt-3 h-10 w-full rounded-xl bg-marca-50 text-sm font-semibold text-marca-700 hover:bg-marca-100"
+          className="mt-3 h-11 w-full rounded-xl bg-marca-50 text-sm font-semibold text-marca-700 hover:bg-marca-100"
         >
           + Guardar dinheiro
         </button>

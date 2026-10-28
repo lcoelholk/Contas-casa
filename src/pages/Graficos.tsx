@@ -3,7 +3,8 @@ import { useCompetencia } from '../hooks/useCompetencia.tsx'
 import { usePessoa } from '../hooks/usePessoa.tsx'
 import { AbasAnalises } from '../components/AbasAnalises.tsx'
 import { useMembros, useTodasContas } from '../hooks/useDados.ts'
-import { useCategorias } from '../hooks/useLancamentos.ts'
+import { useCategorias, useLancamentos } from '../hooks/useLancamentos.ts'
+import { AnaliseDoMes } from '../components/AnaliseDoMes.tsx'
 import { useLancamentosPeriodo } from '../hooks/useAnalises.ts'
 import {
   compromissosPorMes,
@@ -26,7 +27,7 @@ import { formatarCentavos, somar } from '../lib/dinheiro.ts'
 import { Aviso, Carregando } from '../components/ui.tsx'
 import { BarraFiltros, EscolhaFiltro } from '../components/Filtros.tsx'
 import { CORES_SERIES, GraficoColunas, Indicador } from '../components/graficos.tsx'
-import type { Categoria, Conta, Membro } from '../types/banco.ts'
+import type { Categoria, Conta, Lancamento, Membro } from '../types/banco.ts'
 
 type Periodo = '3' | '6' | '12'
 
@@ -54,12 +55,7 @@ export default function Graficos() {
   return (
     <div className="flex flex-col gap-4">
       <AbasAnalises />
-      <div>
-        <h1 className="text-lg font-semibold">Gráficos</h1>
-        <p className="text-sm text-stone-500">
-          {nomePessoa ?? 'Vocês dois'} · até <span className="lowercase">{nomeDaCompetencia(competencia)}</span>
-        </p>
-      </div>
+      <h1 className="sr-only">Gráficos de {nomePessoa ?? 'vocês dois'}</h1>
 
       <BarraFiltros
         ativos={[
@@ -96,6 +92,11 @@ export default function Graficos() {
         }
       />
 
+      <MesAberto pessoa={pessoa} nome={nomePessoa} categorias={categorias.data ?? []} />
+
+      <h2 className="mt-2 text-base font-semibold">
+        Últimos {meses.length} meses
+      </h2>
       <div className={`flex flex-col gap-4 transition-opacity ${dados.isPlaceholderData ? 'opacity-50' : ''}`}>
         <Numeros linhas={filtrados} meses={meses} />
         <EntradasEGastos linhas={filtrados} meses={meses} />
@@ -337,6 +338,28 @@ function DivisaoCompartilhadas({
 }
 
 /** O que já está comprometido nos próximos 6 meses (contas fixas e parcelas) */
+/** O mês do seletor: ritmo de gastos, mapa de calor e categorias vs o mês anterior */
+function MesAberto({ pessoa, nome, categorias }: { pessoa: string; nome?: string; categorias: Categoria[] }) {
+  const { competencia } = useCompetencia()
+  const atual = useLancamentos(competencia)
+  const anterior = useLancamentos(somarMeses(competencia, -1))
+  if (atual.isPending) return <Carregando />
+  const daPessoa = (ls: Lancamento[]) => (pessoa === 'todos' ? ls : ls.filter((l) => l.membro_id === pessoa))
+  return (
+    <>
+      <h2 className="mt-2 text-base font-semibold">
+        {competencia === competenciaAtual() ? 'Este mês' : <span className="first-letter:uppercase">{nomeDaCompetencia(competencia)}</span>}
+      </h2>
+      <AnaliseDoMes
+        atual={daPessoa(atual.data ?? [])}
+        anterior={daPessoa(anterior.data ?? [])}
+        categorias={categorias}
+        nome={nome}
+      />
+    </>
+  )
+}
+
 function ProximosMeses({ pessoa }: { pessoa: string | null }) {
   const inicio = somarMeses(competenciaAtual(), 1)
   const fim = somarMeses(inicio, 5)
