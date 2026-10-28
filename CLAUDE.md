@@ -395,7 +395,7 @@ Depois que Lucas e Emillia criarem as contas, **desativar novos cadastros** no S
    - Deploy: as mesmas duas como **Secrets** do repositório no GitHub.
    - A chave pública pode ficar no front-end: quem protege os dados é o RLS. **Nunca** colocar a chave `service_role` / `sb_secret_...` no código nem no repositório.
 8. Ativar o **GitHub Pages** com origem "GitHub Actions". O workflow `deploy.yml` faz o build e publica a cada push na `main`. Configurar `base: '/Contas-casa/'` no `vite.config.ts`.
-9. No celular, abrir o link e escolher "Adicionar à tela inicial" (iPhone: Safari → Compartilhar → Adicionar à Tela de Início; Android: Chrome → ⋮ → Instalar app). Os ícones estão em `public/` (fonte: `icone.svg` e `icone-maskable.svg`). O service worker guarda só os arquivos do app; os dados vêm sempre do Supabase. Depois de cada publicação, o app se atualiza sozinho ao abrir.
+9. No celular, abrir o link e escolher "Adicionar à tela inicial" (iPhone: Safari → Compartilhar → Adicionar à Tela de Início; Android: Chrome → ⋮ → Instalar app). Os ícones estão em `public/` (fonte: `icone.svg` e `icone-maskable.svg`). O service worker guarda só os arquivos do app; os dados vêm sempre do Supabase. Depois de cada publicação, o app procura a versão nova ao abrir, ao voltar para ele e a cada hora, e recarrega sozinho quando encontra (`src/lib/atualizacao.ts`).
 
 **Mudanças no banco:** toda migration nova deve passar em `npm run test:banco` (Postgres local simulando o Supabase) antes de ser aplicada no projeto real. Ao criar tabela nova, incluir a tabela no laço de RLS/grants (ver `0002_seguranca.sql`) e adicionar testes de acesso.
 
