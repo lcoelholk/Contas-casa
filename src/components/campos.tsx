@@ -84,7 +84,12 @@ export function Segmentado<T extends string>({
   rotulo: string
 }) {
   return (
-    <div role="radiogroup" aria-label={rotulo} className="flex flex-wrap gap-1 rounded-xl bg-stone-100 p-1">
+    <div
+      role="radiogroup"
+      aria-label={rotulo}
+      // Quatro opções viram 2×2 em vez de deixar uma sozinha na segunda linha
+      className={`grid gap-1 rounded-xl bg-stone-100 p-1 ${opcoes.length === 4 ? 'grid-cols-2' : 'auto-cols-fr grid-flow-col'}`}
+    >
       {opcoes.map((o) => (
         <button
           key={o.valor}
@@ -92,7 +97,7 @@ export function Segmentado<T extends string>({
           role="radio"
           aria-checked={valor === o.valor}
           onClick={() => onChange(o.valor)}
-          className={`min-h-10 flex-1 rounded-lg px-3 text-sm font-medium whitespace-nowrap transition-colors ${
+          className={`min-h-11 rounded-lg px-2 text-sm leading-tight font-medium transition-colors ${
             valor === o.valor ? 'bg-superficie text-stone-900 shadow-sm dark:bg-stone-300' : 'text-stone-600'
           }`}
         >

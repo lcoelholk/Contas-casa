@@ -252,7 +252,7 @@ function Numero({ rotulo, valor, icone, tom }: { rotulo: string; valor: string; 
       </span>
       <span className="min-w-0">
         <span className="block text-xs text-stone-500">{rotulo}</span>
-        <span className={`block text-[15px] font-semibold tracking-tight break-words ${tom ?? ''}`}>{valor}</span>
+        <span className={`block text-[15px] font-semibold tracking-tight whitespace-nowrap ${tom ?? ''}`}>{valor}</span>
       </span>
     </div>
   )

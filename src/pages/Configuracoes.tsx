@@ -50,7 +50,7 @@ function BotaoNovo({ texto, onClick }: { texto: string; onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="mt-2 flex h-10 w-full items-center justify-center rounded-xl border border-dashed border-stone-300 text-sm font-semibold text-marca-700 hover:bg-marca-50"
+      className="mt-2 flex h-11 w-full items-center justify-center rounded-xl border border-dashed border-stone-300 text-sm font-semibold text-marca-700 hover:bg-marca-50"
     >
       + {texto}
     </button>

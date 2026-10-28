@@ -44,7 +44,7 @@ export function Folha({
           </h2>
           <button
             onClick={onFechar}
-            className="-mr-2 rounded-lg px-2 py-1 text-sm font-medium text-stone-500 hover:bg-stone-100"
+            className="-mr-2 min-h-11 rounded-lg px-3 text-sm font-medium text-stone-600 hover:bg-stone-100"
           >
             Fechar
           </button>
