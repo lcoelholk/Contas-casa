@@ -29,7 +29,7 @@ export function Layout() {
     <PessoaProvider>
       <NovoLancamentoContexto.Provider value={(tipo) => setNovo({ tipo })}>
         <div className="flex min-h-dvh flex-col">
-          <header className="sticky top-0 z-10 border-b border-stone-200 bg-superficie/95 pt-[env(safe-area-inset-top)] backdrop-blur">
+          <header className="sticky top-0 z-10 bg-fundo/90 pt-[env(safe-area-inset-top)] backdrop-blur">
             <div className="mx-auto flex h-14 max-w-3xl items-center justify-between gap-2 px-2">
               <SeletorMes />
               {membro && (
@@ -69,12 +69,12 @@ function BarraDeBaixo({ casa, onNovo }: { casa?: Conta; onNovo: () => void }) {
   const emCasa = Boolean(casa) && pathname === paraCasa
   const emAnalises = pathname.startsWith('/graficos') || pathname.startsWith('/metas')
   const emMais =
-    !emCasa && ['/mais', '/transacoes', '/fixas', '/configuracoes', '/atalho', '/conta/'].some((p) => pathname.startsWith(p))
+    !emCasa && ['/mais', '/transacoes', '/fixas', '/configuracoes', '/atalho', '/importar', '/conta/'].some((p) => pathname.startsWith(p))
 
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-30 border-t border-stone-200 bg-superficie/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
+      className="fixed inset-x-0 bottom-0 z-30 border-t border-stone-100 bg-superficie/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
     >
       <div className="mx-auto grid h-16 max-w-3xl grid-cols-5 items-center px-2">
         <ItemBarra para="/" fim rotulo="Início" icone={<IconeCasa />} />
@@ -84,7 +84,7 @@ function BarraDeBaixo({ casa, onNovo }: { casa?: Conta; onNovo: () => void }) {
             type="button"
             onClick={onNovo}
             aria-label="Novo lançamento"
-            className="-mt-6 flex size-14 items-center justify-center rounded-full bg-marca-600 text-3xl leading-none text-white shadow-lg ring-4 ring-superficie active:scale-95"
+            className="-mt-6 flex size-14 items-center justify-center rounded-full bg-destaque text-3xl leading-none text-white shadow-lg ring-4 ring-superficie active:scale-95"
           >
             +
           </button>

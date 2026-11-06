@@ -7,8 +7,8 @@ import { useLancamentosPeriodo } from '../hooks/useAnalises.ts'
 import { dataDoLancamento, filtrarTransacoes, type FiltroTransacoes } from '../lib/visaoGeral.ts'
 import { calcularTotais } from '../lib/totais.ts'
 import { formatarCentavos } from '../lib/dinheiro.ts'
-import { formatarData, nomeCurtoDoMes, nomeDaCompetencia, somarMeses } from '../lib/datas.ts'
-import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
+import { formatarDiaMes, nomeCurtoDoMes, nomeDaCompetencia, somarMeses } from '../lib/datas.ts'
+import { Aviso, Carregando } from '../components/ui.tsx'
 import { CheckPago } from '../components/lancamentos.tsx'
 import { classeInput } from '../components/campos.tsx'
 import { Filtro, LinhaFiltros } from '../components/Filtros.tsx'
@@ -146,19 +146,24 @@ export default function Transacoes() {
         />
       </LinhaFiltros>
 
-      <div className="grid grid-cols-2 gap-2">
-        <Numero rotulo="Transações" valor={String(filtradas.length)} icone="#" />
-        <Numero rotulo="Gastos" valor={formatarCentavos(t.saidas)} icone="↘" tom="text-red-700" />
-        <Numero rotulo="Entradas" valor={formatarCentavos(t.entradas)} icone="↗" tom="text-emerald-700" />
-        <Numero
-          rotulo="Saldo"
-          valor={formatarCentavos(t.saldo)}
-          icone="="
-          tom={t.saldo < 0 ? 'text-red-700' : 'text-emerald-700'}
-        />
-      </div>
+      <section aria-label="Totais do que está filtrado" className="flex items-end justify-between gap-3 px-1">
+        <div>
+          <p className="text-sm text-stone-500">
+            {filtradas.length === 1 ? '1 transação' : `${filtradas.length} transações`}
+          </p>
+          <p className="text-2xl font-bold tracking-tight whitespace-nowrap tabular-nums">{formatarCentavos(t.saidas)}</p>
+        </div>
+        <p className="text-right text-sm text-stone-500">
+          Entradas <span className="whitespace-nowrap tabular-nums text-stone-700">{formatarCentavos(t.entradas)}</span>
+          <br />
+          Saldo{' '}
+          <span className={`font-semibold whitespace-nowrap tabular-nums ${t.saldo < 0 ? 'text-red-700' : 'text-stone-700'}`}>
+            {formatarCentavos(t.saldo)}
+          </span>
+        </p>
+      </section>
 
-      <section aria-label="Lista de transações" className="rounded-2xl border border-stone-200 bg-superficie shadow-sm">
+      <section aria-label="Lista de transações" className="rounded-2xl bg-superficie">
         <div className="flex gap-2 border-b border-stone-100 p-3">
           <input
             type="search"
@@ -204,20 +209,6 @@ export default function Transacoes() {
   )
 }
 
-function Numero({ rotulo, valor, icone, tom }: { rotulo: string; valor: string; icone: string; tom?: string }) {
-  return (
-    <div className="flex items-center gap-2 rounded-2xl border border-stone-200 bg-superficie p-3 shadow-sm">
-      <span aria-hidden className={`w-4 text-center text-lg ${tom ?? 'text-stone-500'}`}>
-        {icone}
-      </span>
-      <span className="min-w-0">
-        <span className="block text-xs text-stone-500">{rotulo}</span>
-        <span className={`block text-[15px] font-semibold tracking-tight whitespace-nowrap ${tom ?? ''}`}>{valor}</span>
-      </span>
-    </div>
-  )
-}
-
 function LinhaTransacao({
   lancamento: l,
   conta,
@@ -250,28 +241,22 @@ function LinhaTransacao({
         className="flex min-w-0 flex-1 items-center gap-3 text-left"
       >
         <span className="flex min-w-0 flex-1 flex-col gap-1">
-          <span className={`truncate text-sm font-medium ${l.pago ? 'text-stone-500' : ''}`}>{l.descricao}</span>
-          <span className="flex flex-wrap items-center gap-1 text-xs">
-            <span className="rounded-full bg-stone-100 px-2 py-0.5 text-stone-700">
-              {categoria ? `${categoria.icone ?? ''} ${categoria.nome}` : 'Sem categoria'}
-            </span>
-            {conta && (
-              <span className="flex items-center gap-1 rounded-full bg-stone-100 px-2 py-0.5 text-stone-700">
-                <Bolinha cor={conta.cor} className="size-2" />
-                {conta.nome}
-              </span>
-            )}
-            {conta?.tipo === 'compartilhada' && membro && (
-              <span className="rounded-full bg-stone-100 px-2 py-0.5 text-stone-700">parte de {membro.nome}</span>
-            )}
+          <span className={`truncate font-medium ${l.pago ? 'text-stone-500' : ''}`}>{l.descricao}</span>
+          <span className="truncate text-xs text-stone-500">
+            {[
+              categoria ? `${categoria.icone ?? ''} ${categoria.nome}`.trim() : null,
+              conta?.tipo === 'compartilhada' ? `${conta.nome}${membro ? ` · parte de ${membro.nome}` : ''}` : null,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </span>
         </span>
         <span className="flex shrink-0 flex-col items-end">
-          <span className={`text-sm font-semibold tabular-nums ${entrada ? 'text-emerald-700' : ''}`}>
+          <span className={`font-semibold whitespace-nowrap tabular-nums ${entrada ? 'text-emerald-700' : ''}`}>
             {entrada ? '+' : ''}
             {formatarCentavos(l.valor_centavos)}
           </span>
-          <span className="text-xs text-stone-500 tabular-nums">{formatarData(dataDoLancamento(l))}</span>
+          <span className="text-xs text-stone-500 tabular-nums">{formatarDiaMes(dataDoLancamento(l))}</span>
         </span>
       </button>
     </li>

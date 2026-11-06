@@ -19,6 +19,10 @@
 
   /* Fundo dos cartões, painéis e barras (branco no claro) */
   --color-superficie: #ffffff;
+  /* Fundo da página: um pouco mais escuro que os cartões, que se separam sem borda */
+  --color-fundo: #f3f2f0;
+  /* Bloco de destaque do topo (Falta pagar), com letra branca */
+  --color-destaque: #0f5f59;
 
   /* Séries dos gráficos (paleta validada para daltonismo em cada tema) */
   --color-serie-1: #2a78d6;
@@ -36,6 +40,8 @@ html.dark {
   color-scheme: dark;
 
   --color-superficie: #1c1917;
+  --color-fundo: #0c0a09;
+  --color-destaque: #134e4a;
 
   --color-stone-50: #0c0a09;
   --color-stone-100: #26221f;
@@ -87,6 +93,6 @@ html {
 }
 
 body {
-  @apply bg-stone-50 text-stone-900 antialiased;
+  @apply bg-fundo text-stone-900 antialiased;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }

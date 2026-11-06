@@ -38,8 +38,8 @@ export default function SemConfiguracao() {
         </span>
       </section>
 
-      <section className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-stone-500 uppercase tracking-wide">
+      <section className="rounded-2xl bg-superficie p-4">
+        <h2 className="text-sm font-semibold text-stone-500">
           Conexão com o Supabase
         </h2>
         <StatusConexao

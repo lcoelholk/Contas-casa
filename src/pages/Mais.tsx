@@ -52,6 +52,12 @@ export default function Mais() {
           onClick={() => setCriando(true)}
         />
         <ItemLink
+          para="/importar"
+          icone="📥"
+          titulo="Importar extrato"
+          detalhe="Arquivo OFX ou CSV do banco: conta ou cartão"
+        />
+        <ItemLink
           para="/atalho"
           icone="📲"
           titulo="Gasto rápido no iPhone"
@@ -71,7 +77,7 @@ export default function Mais() {
       <button
         type="button"
         onClick={sair}
-        className="h-12 rounded-2xl border border-stone-200 bg-superficie font-medium text-red-700 shadow-sm hover:bg-red-50"
+        className="h-12 rounded-2xl bg-superficie font-medium text-red-700 hover:bg-red-50"
       >
         Sair{eu ? ` (${eu.nome})` : ''}
       </button>
@@ -89,8 +95,8 @@ export default function Mais() {
 
 function Grupo({ titulo, children }: { titulo: string; children: ReactNode }) {
   return (
-    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-superficie px-4 pt-3 pb-1 shadow-sm">
-      <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
+    <section aria-label={titulo} className="rounded-2xl bg-superficie px-4 pt-3 pb-1">
+      <h2 className="text-sm font-semibold text-stone-500">{titulo}</h2>
       <ul className="divide-y divide-stone-100">{children}</ul>
     </section>
   )

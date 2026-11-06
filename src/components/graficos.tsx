@@ -305,7 +305,7 @@ export function Indicador({
   tom?: 'neutro' | 'bom' | 'ruim'
 }) {
   return (
-    <div className="rounded-2xl border border-stone-200 bg-superficie p-3 shadow-sm">
+    <div className="rounded-2xl bg-superficie p-3">
       <p className="text-xs text-stone-500">{rotulo}</p>
       <p className="mt-0.5 text-xl font-semibold tracking-tight">{valor}</p>
       {detalhe && (

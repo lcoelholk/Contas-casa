@@ -1,7 +1,7 @@
 import { Bolinha } from './ui.tsx'
 import { formatarCentavos } from '../lib/dinheiro.ts'
 import { formatarDiaMes, type DataISO } from '../lib/datas.ts'
-import { statusVencimento, type Totais } from '../lib/totais.ts'
+import { statusVencimento } from '../lib/totais.ts'
 import type { Categoria, Lancamento, Membro } from '../types/banco.ts'
 
 /** Botão redondo de pago / não pago */
@@ -94,12 +94,13 @@ export function ItemLancamento({
       <button type="button" onClick={onAbrir} className="flex min-h-11 min-w-0 flex-1 items-center gap-3 text-left">
         <span className="flex min-w-0 flex-1 flex-col gap-0.5">
           <span className={`truncate font-medium ${l.pago && !entrada ? 'text-stone-500' : ''}`}>{l.descricao}</span>
+          {/* Uma linha curta: origem e vencimento; a categoria só quando não há mais nada a dizer */}
           <Detalhes
-            partes={[
-              categoria && `${categoria.icone ?? ''} ${categoria.nome}`.trim(),
-              selo,
-              l.vencimento ? <TextoVencimento key="v" l={l} hoje={hoje} /> : null,
-            ]}
+            partes={
+              selo || l.vencimento
+                ? [selo, l.vencimento ? <TextoVencimento key="v" l={l} hoje={hoje} /> : null]
+                : [categoria && `${categoria.icone ?? ''} ${categoria.nome}`.trim()]
+            }
           />
         </span>
         <span
@@ -178,61 +179,3 @@ export function ItemGrupo({
   )
 }
 
-function Numero({ rotulo, valor, destaque }: { rotulo: string; valor: number; destaque?: string }) {
-  return (
-    <div className="flex min-w-0 flex-col">
-      <span className="text-xs text-stone-500">{rotulo}</span>
-      <span className={`text-sm font-semibold tabular-nums sm:text-base ${destaque ?? ''}`}>{formatarCentavos(valor)}</span>
-    </div>
-  )
-}
-
-/** Números do mês de uma pessoa */
-export function PainelTotais({ totais }: { totais: Totais }) {
-  return (
-    <section aria-label="Totais do mês" className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
-      <div className="grid grid-cols-3 gap-2">
-        <Numero rotulo="A pagar" valor={totais.saidas} />
-        <Numero rotulo="Pago" valor={totais.pago} destaque="text-emerald-700" />
-        <Numero rotulo="Pendente" valor={totais.pendente} destaque={totais.pendente > 0 ? 'text-amber-700' : ''} />
-      </div>
-      <div className="mt-3 grid grid-cols-2 gap-2 border-t border-stone-100 pt-3">
-        <Numero rotulo="Entradas" valor={totais.entradas} destaque="text-emerald-700" />
-        <Numero
-          rotulo="Saldo"
-          valor={totais.saldo}
-          destaque={totais.saldo < 0 ? 'text-red-700' : ''}
-        />
-      </div>
-    </section>
-  )
-}
-
-/** Números do mês de uma conta compartilhada: total e parte de cada um */
-export function PainelTotaisCompartilhada({
-  total,
-  pendente,
-  porMembro,
-}: {
-  total: number
-  pendente: number
-  porMembro: { membro: Membro; valor: number }[]
-}) {
-  return (
-    <section aria-label="Totais do mês" className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
-      <div className="grid grid-cols-2 gap-2">
-        <Numero rotulo="Total do mês" valor={total} />
-        <Numero rotulo="Pendente" valor={pendente} destaque={pendente > 0 ? 'text-amber-700' : ''} />
-      </div>
-      <div className="mt-3 flex flex-col gap-1.5 border-t border-stone-100 pt-3">
-        {porMembro.map(({ membro, valor }) => (
-          <div key={membro.id} className="flex items-center gap-2 text-sm">
-            <Bolinha cor={membro.cor} />
-            <span className="flex-1">{membro.nome}</span>
-            <span className="font-medium tabular-nums">{formatarCentavos(valor)}</span>
-          </div>
-        ))}
-      </div>
-    </section>
-  )
-}

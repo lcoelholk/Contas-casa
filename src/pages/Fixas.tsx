@@ -55,7 +55,7 @@ export default function Fixas() {
         {listaMembros.map((m) => {
           const t = totais.find((x) => x.membroId === m.id)!
           return (
-            <div key={m.id} className="rounded-2xl border border-stone-200 bg-superficie p-3 shadow-sm">
+            <div key={m.id} className="rounded-2xl bg-superficie p-3">
               <p className="flex items-center gap-1.5 text-xs text-stone-500">
                 <Bolinha cor={m.cor} />
                 Fixo de {m.nome}
@@ -154,9 +154,9 @@ function GrupoDaConta({
 }) {
   const totalSaidas = fixas.filter((f) => f.recorrente.tipo === 'saida').reduce((s, f) => s + f.total, 0)
   return (
-    <section aria-label={conta.nome} className="rounded-2xl border border-stone-200 bg-superficie px-4 pt-4 pb-1 shadow-sm">
+    <section aria-label={conta.nome} className="rounded-2xl bg-superficie px-4 pt-4 pb-1">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-semibold tracking-wide text-stone-500 uppercase">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-stone-500">
           <Bolinha cor={conta.cor} />
           {conta.nome}
         </h2>
@@ -225,7 +225,7 @@ function ListaSimples({
   children: (r: Recorrente) => string
 }) {
   return (
-    <details className="rounded-2xl border border-stone-200 bg-superficie px-4 py-3 text-sm shadow-sm">
+    <details className="rounded-2xl bg-superficie px-4 py-3 text-sm">
       <summary className="cursor-pointer font-medium text-stone-600">
         {titulo} ({itens.length})
       </summary>
