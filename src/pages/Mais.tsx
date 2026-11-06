@@ -52,6 +52,12 @@ export default function Mais() {
           onClick={() => setCriando(true)}
         />
         <ItemLink
+          para="/importar"
+          icone="📥"
+          titulo="Importar extrato"
+          detalhe="Arquivo OFX ou CSV do banco: conta ou cartão"
+        />
+        <ItemLink
           para="/atalho"
           icone="📲"
           titulo="Gasto rápido no iPhone"

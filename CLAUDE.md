@@ -70,7 +70,7 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 - **Toque mínimo de 44px** em tudo que é clicável (o círculo de pago tem área de toque maior que o desenho)
 - **Dinheiro nunca é cortado** com "…" nem quebrado no meio do número; ícones de ação em traço (`src/components/icones.tsx`), emoji só nas categorias
 - **Análises** = Gráficos + Metas e limites (alternados no topo)
-- **Mais:** suas contas (a sua aba e as compartilhadas), Transações, Contas fixas, Nova conta, Gasto rápido no iPhone, Ajustes, as abas do outro ("Do outro") e Sair
+- **Mais:** suas contas (a sua aba e as compartilhadas), Transações, Contas fixas, Nova conta, Importar extrato, Gasto rápido no iPhone, Ajustes, as abas do outro ("Do outro") e Sair
 - **Filtros à vista:** cada filtro é uma etiqueta "Conta  Todas ▾" que abre a lista do próprio celular (`LinhaFiltros` e `Filtro` em `src/components/Filtros.tsx`); fica destacada quando sai do padrão, e "Limpar" aparece quando algo mudou. Vale para Transações e Gráficos.
 - **Cada um vê primeiro o que é seu:** o filtro de pessoa (Início, Transações, Gráficos) começa em quem entrou e vale para todas as telas até sair do app (`usePessoa`); um toque troca para "Os dois". Os dados continuam compartilhados (RLS igual).
 
@@ -347,6 +347,13 @@ Migration 0009 (gasto rápido): tabela `atalhos` (um código por pessoa, guardad
 | `gerar_token_atalho()` | Cria ou troca o código de quem está logado e devolve o código em texto (só desta vez) |
 | `lancar_rapido(token, valor, descricao, onde, categoria)` | **Única função liberada para `anon`**: o código é a senha. Lança um gasto já pago hoje na aba principal de quem tem o código, ou na aba com o nome em `onde` ("Casa" divide igual; a parte de quem lançou paga, a do outro a pagar). Sem categoria, adivinha pela descrição (`categoria_do_texto`). Devolve "R$ 23,90 em Mercado: Padaria" |
 
+Migration 0010 (importar extrato): coluna `lancamentos.id_externo` (identificador da linha no extrato, único por aba e pessoa) e `importar_lancamentos(conta, itens jsonb)` (`security invoker`): lança cada linha já paga no mês da própria data, com categoria adivinhada; numa compartilhada divide igual (só gastos). Linha repetida não entra de novo. Devolve `{novos, repetidos, ignorados}`.
+
+### Importar extrato (tela "Importar extrato", em Mais)
+- O arquivo OFX ou CSV é lido **no celular** (`src/lib/importar.ts`): OFX de qualquer banco, CSV do Nubank (cartão e conta), Inter e CSV genérico com colunas de data, descrição e valor. Texto em UTF-8 ou Windows-1252.
+- A pessoa diz se é extrato da conta ou fatura do cartão (o app dá um palpite), escolhe a aba e desmarca o que não quer. No cartão, créditos (pagamento da fatura, estorno) já vêm desmarcados.
+- Sem identificador do banco, a linha ganha um a partir de data, valor e descrição, para que importar o mesmo arquivo de novo não duplique.
+
 ### Gasto rápido no iPhone (tela "Gasto rápido no iPhone", em Mais)
 - Toque duplo atrás do iPhone (Acessibilidade → Toque → Tocar Atrás) roda um atalho do app Atalhos: pergunta "Quanto?", "Com o quê?" e "Onde?" (Meu/Casa) e chama `POST <url>/rest/v1/rpc/lancar_rapido` com o cabeçalho `apikey` (chave pública) e o corpo JSON `p_token`, `p_valor`, `p_descricao`, `p_onde`. Não abre o app.
 - A tela cria/troca o código, mostra endereço e chave para copiar e o passo a passo.
@@ -450,6 +457,6 @@ Cada etapa só termina quando o critério "pronto quando" é atendido e o app ro
 - ~~Gráficos de evolução mês a mês~~ (feito: tela Gráficos)
 - ~~Metas de economia~~ e ~~orçamento por categoria com alerta~~ (feito: tela Metas)
 - Lembrete de vencimento por notificação ou e-mail
-- Importar extrato do banco (CSV/OFX)
+- ~~Importar extrato do banco (CSV/OFX)~~ (feito: tela Importar extrato)
 - Anexar comprovante ao lançamento
 - Exportar o mês em PDF ou planilha

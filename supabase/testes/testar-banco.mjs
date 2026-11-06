@@ -426,6 +426,37 @@ await como('anon', null)
 await deveFalhar(`select lancar_rapido('${token}', '5', 'Velho')`, 'gerar outro código desliga o antigo')
 ok((await q(`select lancar_rapido($1, '5', 'Novo') m`, [novoToken])).length === 1, 'o código novo funciona')
 
+// Importar extrato (OFX/CSV lido no app)
+console.log('\n— Importar extrato —')
+await como('authenticated', 'lucascoelho855@gmail.com')
+const itens = JSON.stringify([
+  { data: '2030-03-05', descricao: 'Supermercado Bom', centavos: -12345, id: 'ofx:1' },
+  { data: '2030-03-01', descricao: 'Salário empresa', centavos: 500000, id: 'ofx:2' },
+  { data: '2030-02-28', descricao: 'Uber trip', centavos: -2000, id: 'ofx:3' },
+])
+const r1 = (await q(`select importar_lancamentos($1, $2::jsonb) r`, [idContaLucas, itens]))[0].r
+ok(r1.novos === 3 && r1.repetidos === 0, `importa na aba do Lucas → ${JSON.stringify(r1)}`)
+const r2 = (await q(`select importar_lancamentos($1, $2::jsonb) r`, [idContaLucas, itens]))[0].r
+ok(r2.novos === 0 && r2.repetidos === 3, 'importar o mesmo extrato de novo não duplica')
+const imp = await q(`select l.*, c.nome cat from lancamentos l left join categorias c on c.id = l.categoria_id where id_externo like 'ofx:%' and conta_id = $1 order by id_externo`, [idContaLucas])
+ok(imp[0].tipo === 'saida' && imp[0].valor_centavos === 12345 && imp[0].cat === 'Mercado' && imp[0].pago && imp[0].competencia.toISOString().startsWith('2030-03-01'), 'gasto: valor positivo, categoria adivinhada, pago, no mês da data')
+ok(imp[1].tipo === 'entrada' && imp[1].cat === 'Salário', 'entrada vira entrada (Salário)')
+ok(imp[2].competencia.toISOString().startsWith('2030-02-01'), 'cada linha vai para o mês da própria data')
+const r3 = (await q(`select importar_lancamentos($1, $2::jsonb) r`, [idCasa, JSON.stringify([
+  { data: '2030-03-10', descricao: 'Mercado do mês', centavos: -30001, id: 'csv:9' },
+  { data: '2030-03-11', descricao: 'Pix recebido', centavos: 1000, id: 'csv:10' },
+])]))[0].r
+ok(r3.novos === 1 && r3.ignorados === 1, `na Casa: gasto dividido e entrada ignorada → ${JSON.stringify(r3)}`)
+const casaImp = await q(`select membro_id, valor_centavos, pago from lancamentos where id_externo = 'csv:9' order by valor_centavos desc`)
+ok(casaImp.length === 2 && casaImp[0].membro_id === lucas && casaImp[0].valor_centavos === 15001 && casaImp[0].pago && !casaImp[1].pago, 'parte de quem importou (com o centavo a mais) paga; a do outro a pagar')
+const r4 = (await q(`select importar_lancamentos($1, $2::jsonb) r`, [idCasa, JSON.stringify([{ data: '2030-03-10', descricao: 'Mercado do mês', centavos: -30001, id: 'csv:9' }])]))[0].r
+ok(r4.repetidos === 1, 'na Casa também não duplica')
+await deveFalhar(`select importar_lancamentos('${idContaLucas}', '[{"data":"2030-01-01","centavos":-1}]'::jsonb)`, 'linha sem identificador é recusada')
+await como('authenticated', 'estranho@teste.com')
+await deveFalhar(`select importar_lancamentos('${idContaLucas}', '${itens}'::jsonb)`, 'quem não é membro não importa')
+await como('anon', null)
+await deveFalhar(`select importar_lancamentos('${idContaLucas}', '${itens}'::jsonb)`, 'visitante sem login não importa')
+
 await db.exec('reset role')
 console.log(falhas === 0 ? '\nTudo certo.' : `\n${falhas} falha(s).`)
 process.exit(falhas === 0 ? 0 : 1)

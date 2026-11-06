@@ -69,7 +69,7 @@ function BarraDeBaixo({ casa, onNovo }: { casa?: Conta; onNovo: () => void }) {
   const emCasa = Boolean(casa) && pathname === paraCasa
   const emAnalises = pathname.startsWith('/graficos') || pathname.startsWith('/metas')
   const emMais =
-    !emCasa && ['/mais', '/transacoes', '/fixas', '/configuracoes', '/atalho', '/conta/'].some((p) => pathname.startsWith(p))
+    !emCasa && ['/mais', '/transacoes', '/fixas', '/configuracoes', '/atalho', '/importar', '/conta/'].some((p) => pathname.startsWith(p))
 
   return (
     <nav
