@@ -16,6 +16,7 @@ import Fixas from './pages/Fixas.tsx'
 import Mais from './pages/Mais.tsx'
 import Atalho from './pages/Atalho.tsx'
 import Importar from './pages/Importar.tsx'
+import Rapido from './pages/Rapido.tsx'
 
 export default function App() {
   // Sem .env.local preenchido, mostra só a tela de configuração
@@ -43,6 +44,7 @@ export default function App() {
             <Route path="mais" element={<Mais />} />
             <Route path="atalho" element={<Atalho />} />
             <Route path="importar" element={<Importar />} />
+            <Route path="rapido" element={<Rapido />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
