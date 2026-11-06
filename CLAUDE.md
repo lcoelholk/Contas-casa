@@ -355,7 +355,8 @@ Migration 0010 (importar extrato): coluna `lancamentos.id_externo` (identificado
 - Sem identificador do banco, a linha ganha um a partir de data, valor e descrição, para que importar o mesmo arquivo de novo não duplique.
 
 ### Gasto rápido no iPhone (tela "Gasto rápido no iPhone", em Mais)
-- Toque duplo atrás do iPhone (Acessibilidade → Toque → Tocar Atrás) roda um atalho do app Atalhos: pergunta "Quanto?", "Com o quê?" e "Onde?" (Meu/Casa) e chama `POST <url>/rest/v1/rpc/lancar_rapido` com o cabeçalho `apikey` (chave pública) e o corpo JSON `p_token`, `p_valor`, `p_descricao`, `p_onde`. Não abre o app.
+- **Jeito fácil (o padrão):** o atalho do app Atalhos tem uma ação só, "Abrir URLs" com `<endereço do app>#/rapido`. A tela **Gasto rápido** (`src/pages/Rapido.tsx`) pede valor, o quê e "Só meu" ou a primeira compartilhada (meio a meio) e lança já pago no mês atual, com a categoria de `categoria_do_texto`. O atalho abre no Safari, que tem login separado do app da tela inicial: entra-se uma vez.
+- **Jeito avançado** (recolhido na tela): toque duplo atrás do iPhone (Acessibilidade → Toque → Tocar Atrás) roda um atalho do app Atalhos que pergunta "Quanto?", "Com o quê?" e "Onde?" (Meu/Casa) e chama `POST <url>/rest/v1/rpc/lancar_rapido` com o cabeçalho `apikey` (chave pública) e o corpo JSON `p_token`, `p_valor`, `p_descricao`, `p_onde`. Não abre o app.
 - A tela cria/troca o código, mostra endereço e chave para copiar e o passo a passo.
 
 Migration 0008 (metas): tabelas `orcamentos`, `metas` e `meta_aportes` (com RLS e tempo real) e a função `gerar_periodo(de, ate)`, que gera vários meses de uma vez (até 25) para os gráficos.
