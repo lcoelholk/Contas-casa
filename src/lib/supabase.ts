@@ -16,6 +16,10 @@ export const supabase: SupabaseClient | null = supabaseConfigurado
     })
   : null
 
+/** O que o atalho do iPhone precisa para lançar sem abrir o app (a chave é a pública) */
+export const enderecoGastoRapido = url ? `${url.replace(/\/$/, '')}/rest/v1/rpc/lancar_rapido` : ''
+export const chavePublica = anonKey ?? ''
+
 /** Cliente do Supabase para uso nas telas (só depois de conferir `supabaseConfigurado`) */
 export function db(): SupabaseClient {
   if (!supabase) throw new Error('Supabase não configurado: preencha o .env.local')

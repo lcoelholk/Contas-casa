@@ -51,6 +51,12 @@ export default function Mais() {
           detalhe="Viagem, Pet, Carro..."
           onClick={() => setCriando(true)}
         />
+        <ItemLink
+          para="/atalho"
+          icone="📲"
+          titulo="Gasto rápido no iPhone"
+          detalhe="Toque duas vezes atrás do celular e lance sem abrir o app"
+        />
         <ItemLink para="/configuracoes" icone="⚙️" titulo="Ajustes" detalhe="Abas, categorias, nomes e cores" />
       </Grupo>
 
