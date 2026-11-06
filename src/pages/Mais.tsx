@@ -7,7 +7,7 @@ import { Bolinha } from '../components/ui.tsx'
 import { FormConta } from '../components/FormConta.tsx'
 import type { Conta } from '../types/banco.ts'
 
-/** Tudo o que não está na barra de baixo: abas, contas fixas, ajustes, sair */
+/** Tudo o que não está na barra de baixo: abas, transações, contas fixas, ajustes, sair */
 export default function Mais() {
   const { sair } = useAuth()
   const { membro: eu } = useMembroAtual()
@@ -33,6 +33,12 @@ export default function Mais() {
       </Grupo>
 
       <Grupo titulo="Organizar">
+        <ItemLink
+          para="/transacoes"
+          icone="🧾"
+          titulo="Transações"
+          detalhe="Todas as linhas do mês ou dos últimos meses, com busca"
+        />
         <ItemLink
           para="/fixas"
           icone="🔁"

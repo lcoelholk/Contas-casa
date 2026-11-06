@@ -25,7 +25,7 @@ import {
 } from '../lib/datas.ts'
 import { formatarCentavos, somar } from '../lib/dinheiro.ts'
 import { Aviso, Carregando } from '../components/ui.tsx'
-import { BarraFiltros, EscolhaFiltro } from '../components/Filtros.tsx'
+import { Filtro, LinhaFiltros } from '../components/Filtros.tsx'
 import { CORES_SERIES, GraficoColunas, Indicador } from '../components/graficos.tsx'
 import type { Categoria, Conta, Lancamento, Membro } from '../types/banco.ts'
 
@@ -57,40 +57,32 @@ export default function Graficos() {
       <AbasAnalises />
       <h1 className="sr-only">Gráficos de {nomePessoa ?? 'vocês dois'}</h1>
 
-      <BarraFiltros
-        ativos={[
-          ...(periodo !== '6'
-            ? [{ chave: 'periodo', texto: `${periodo} meses`, onRemover: () => setPeriodo('6') }]
-            : []),
-          ...(pessoa !== 'todos'
-            ? [{ chave: 'pessoa', texto: nomePessoa ?? 'Pessoa', onRemover: () => setPessoa('todos') }]
-            : []),
-        ]}
+      <LinhaFiltros
+        mudou={periodo !== '6' || pessoa !== 'todos'}
         onLimpar={() => {
           setPeriodo('6')
           setPessoa('todos')
         }}
-        painel={
-          <>
-            <EscolhaFiltro
-              rotulo="Período"
-              valor={periodo}
-              onChange={setPeriodo}
-              opcoes={[
-                { valor: '3', texto: '3 meses' },
-                { valor: '6', texto: '6 meses' },
-                { valor: '12', texto: '12 meses' },
-              ]}
-            />
-            <EscolhaFiltro
-              rotulo="Pessoa"
-              valor={pessoa}
-              onChange={setPessoa}
-              opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...listaMembros.map((m) => ({ valor: m.id, texto: m.nome }))]}
-            />
-          </>
-        }
-      />
+      >
+        <Filtro
+          rotulo="Período"
+          valor={periodo}
+          onChange={setPeriodo}
+          padrao="6"
+          opcoes={[
+            { valor: '3', texto: '3 meses' },
+            { valor: '6', texto: '6 meses' },
+            { valor: '12', texto: '12 meses' },
+          ]}
+        />
+        <Filtro
+          rotulo="Pessoa"
+          valor={pessoa}
+          onChange={setPessoa}
+          padrao="todos"
+          opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...listaMembros.map((m) => ({ valor: m.id, texto: m.nome }))]}
+        />
+      </LinhaFiltros>
 
       <MesAberto pessoa={pessoa} nome={nomePessoa} categorias={categorias.data ?? []} />
 
