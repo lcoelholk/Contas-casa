@@ -142,12 +142,6 @@ export function diasNoMes(competencia: Competencia): number {
   return ultimoDiaDoMes(ano, mes)
 }
 
-/** Dia da semana do 1º dia do mês (0 = domingo) */
-export function diaDaSemanaDoInicio(competencia: Competencia): number {
-  const { ano, mes } = lerData(competencia)
-  return new Date(Date.UTC(ano, mes - 1, 1)).getUTCDay()
-}
-
 /** "2026-10-01" → "01/10/2026" */
 export function formatarData(data: DataISO): string {
   const { ano, mes, dia } = lerData(data)

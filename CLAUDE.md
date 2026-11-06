@@ -58,20 +58,20 @@ A aba **Casa** mostra todos os lançamentos da conta Casa, agrupados por item, c
 
 ### Geral
 - Login por e-mail e senha (Supabase Auth)
-- Seletor de mês (← outubro 2026 →) em todas as telas; o padrão é o mês atual
+- Seletor de mês (← outubro 2026 →) em todas as telas; o padrão é o mês atual. **Arrastar o dedo para o lado** na tela também troca o mês (`useArrastarMes`; não vale em campos, folhas abertas, listas que rolam de lado e `data-sem-arrastar`)
 - Sincronização em tempo real: o que um lança, o outro vê sem recarregar (Supabase Realtime)
 - Interface em português, pensada primeiro para celular
 - Valores em reais, formatados com `Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' })`
 
 ### Navegação
-- **Barra fixa embaixo:** Início · Transações · **(+)** · Análises · Mais
+- **Barra fixa embaixo:** Início · Casa (a primeira aba compartilhada) · **(+)** · Análises · Mais
 - **(+)** abre "novo lançamento" de qualquer tela: escolhe a aba (as de quem entrou primeiro) e o tipo (só desta vez, todo mês, parcelado). **Sabe onde você está:** dentro de uma aba já começa nela; em Contas fixas já começa em "todo mês". É o **único** botão flutuante (nada de outros botões fixos por cima da lista); dentro das seções ficam só os atalhos tracejados ("+ Gasto", "+ Fixa", "+ Parcelada")
 - **Cabeçalho numa linha:** ‹ mês › à esquerda (com "Hoje" quando estiver em outro mês) e quem entrou à direita
 - **Toque mínimo de 44px** em tudo que é clicável (o círculo de pago tem área de toque maior que o desenho)
 - **Dinheiro nunca é cortado** com "…" nem quebrado no meio do número; ícones de ação em traço (`src/components/icones.tsx`), emoji só nas categorias
 - **Análises** = Gráficos + Metas e limites (alternados no topo)
-- **Mais:** suas contas (a sua aba e as compartilhadas), Contas fixas, Nova conta, Ajustes, as abas do outro ("Do outro") e Sair
-- **Filtros e ordenação ficam escondidos:** cada tela com filtro mostra só os botões **Filtrar** e **Ordenar** (`BarraFiltros` em `src/components/Filtros.tsx`). Filtrar abre um painel com as opções em etiquetas; os filtros ligados aparecem como etiquetas com ✕ (e "Limpar tudo"). Vale para Início, Transações e Gráficos.
+- **Mais:** suas contas (a sua aba e as compartilhadas), Transações, Contas fixas, Nova conta, Gasto rápido no iPhone, Ajustes, as abas do outro ("Do outro") e Sair
+- **Filtros à vista:** cada filtro é uma etiqueta "Conta  Todas ▾" que abre a lista do próprio celular (`LinhaFiltros` e `Filtro` em `src/components/Filtros.tsx`); fica destacada quando sai do padrão, e "Limpar" aparece quando algo mudou. Vale para Transações e Gráficos.
 - **Cada um vê primeiro o que é seu:** o filtro de pessoa (Início, Transações, Gráficos) começa em quem entrou e vale para todas as telas até sair do app (`usePessoa`); um toque troca para "Os dois". Os dados continuam compartilhados (RLS igual).
 
 ### Início (antigo "Resumo"/"Visão geral")
@@ -120,7 +120,7 @@ Responde primeiro "quanto ainda falta pagar este mês?". De cima para baixo:
 
 ### Gráficos (tela "Gráficos")
 - Filtros no topo: período (3, 6 ou 12 meses, terminando no mês do seletor) e pessoa (os dois, Lucas, Emillia)
-- **Este mês** (`AnaliseDoMes`): ritmo de gastos (linha acumulada vs mês passado), mapa de calor dos dias e categorias vs mês anterior
+- **Este mês** (`AnaliseDoMes`): ritmo de gastos (linha acumulada vs mês passado) e categorias vs mês anterior (o mapa de calor dos dias saiu)
 - Números do período: gasto do mês vs média dos anteriores, gasto médio, entrada média, quanto sobrou das entradas
 - Entradas e gastos mês a mês (colunas; tocar mostra o saldo)
 - Gastos por categoria no período; tocar numa categoria mostra a evolução dela mês a mês
@@ -340,6 +340,17 @@ Migration 0005 (compras parceladas), mesmas regras de segurança:
 | `quitar_compra(id, mes, lancar_saldo)` | Regra 8. Com `lancar_saldo`, o que falta entra no mês como "<descrição> (quitação)" (`parcela_numero` nulo) |
 | `excluir_compra(id)` | Regra 10 |
 
+Migration 0009 (gasto rápido): tabela `atalhos` (um código por pessoa, guardado só como hash sha256; com RLS, fora do tempo real porque nenhuma tela precisa dela ao vivo) e as funções:
+
+| Função | O que faz |
+|---|---|
+| `gerar_token_atalho()` | Cria ou troca o código de quem está logado e devolve o código em texto (só desta vez) |
+| `lancar_rapido(token, valor, descricao, onde, categoria)` | **Única função liberada para `anon`**: o código é a senha. Lança um gasto já pago hoje na aba principal de quem tem o código, ou na aba com o nome em `onde` ("Casa" divide igual; a parte de quem lançou paga, a do outro a pagar). Sem categoria, adivinha pela descrição (`categoria_do_texto`). Devolve "R$ 23,90 em Mercado: Padaria" |
+
+### Gasto rápido no iPhone (tela "Gasto rápido no iPhone", em Mais)
+- Toque duplo atrás do iPhone (Acessibilidade → Toque → Tocar Atrás) roda um atalho do app Atalhos: pergunta "Quanto?", "Com o quê?" e "Onde?" (Meu/Casa) e chama `POST <url>/rest/v1/rpc/lancar_rapido` com o cabeçalho `apikey` (chave pública) e o corpo JSON `p_token`, `p_valor`, `p_descricao`, `p_onde`. Não abre o app.
+- A tela cria/troca o código, mostra endereço e chave para copiar e o passo a passo.
+
 Migration 0008 (metas): tabelas `orcamentos`, `metas` e `meta_aportes` (com RLS e tempo real) e a função `gerar_periodo(de, ate)`, que gera vários meses de uma vez (até 25) para os gráficos.
 
 Migration 0007 (tempo real): coloca as 8 tabelas na publicação `supabase_realtime`. O app escuta as mudanças (`useTempoReal`) e recarrega só os dados afetados (`src/lib/tempoReal.ts`). **Tabela nova precisa entrar nas duas listas.**
@@ -395,7 +406,7 @@ Depois que Lucas e Emillia criarem as contas, **desativar novos cadastros** no S
    - Deploy: as mesmas duas como **Secrets** do repositório no GitHub.
    - A chave pública pode ficar no front-end: quem protege os dados é o RLS. **Nunca** colocar a chave `service_role` / `sb_secret_...` no código nem no repositório.
 8. Ativar o **GitHub Pages** com origem "GitHub Actions". O workflow `deploy.yml` faz o build e publica a cada push na `main`. Configurar `base: '/Contas-casa/'` no `vite.config.ts`.
-9. No celular, abrir o link e escolher "Adicionar à tela inicial" (iPhone: Safari → Compartilhar → Adicionar à Tela de Início; Android: Chrome → ⋮ → Instalar app). Os ícones estão em `public/` (fonte: `icone.svg` e `icone-maskable.svg`). O service worker guarda só os arquivos do app; os dados vêm sempre do Supabase. Depois de cada publicação, o app se atualiza sozinho ao abrir.
+9. No celular, abrir o link e escolher "Adicionar à tela inicial" (iPhone: Safari → Compartilhar → Adicionar à Tela de Início; Android: Chrome → ⋮ → Instalar app). Os ícones estão em `public/` (fonte: `icone.svg` e `icone-maskable.svg`). O service worker guarda só os arquivos do app; os dados vêm sempre do Supabase. Depois de cada publicação, o app procura a versão nova ao abrir, ao voltar para ele e a cada hora, e recarrega sozinho quando encontra (`src/lib/atualizacao.ts`).
 
 **Mudanças no banco:** toda migration nova deve passar em `npm run test:banco` (Postgres local simulando o Supabase) antes de ser aplicada no projeto real. Ao criar tabela nova, incluir a tabela no laço de RLS/grants (ver `0002_seguranca.sql`) e adicionar testes de acesso.
 

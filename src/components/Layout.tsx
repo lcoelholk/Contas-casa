@@ -2,18 +2,21 @@ import { useState, type ReactNode } from 'react'
 import { NavLink, Outlet, useLocation, useMatch } from 'react-router-dom'
 import { useMembroAtual, useTodasContas } from '../hooks/useDados.ts'
 import { useTempoReal } from '../hooks/useTempoReal.ts'
+import { useArrastarMes } from '../hooks/useArrastarMes.ts'
 import { PessoaProvider } from '../hooks/usePessoa.tsx'
 import { NovoLancamentoContexto } from '../hooks/useNovoLancamento.tsx'
 import { abasDoMembro } from '../lib/contas.ts'
 import { SeletorMes } from './SeletorMes.tsx'
 import { NovoLancamento, type TipoNovo } from './NovoLancamento.tsx'
 import { Bolinha } from './ui.tsx'
+import type { Conta } from '../types/banco.ts'
 
 export function Layout() {
   const { membro } = useMembroAtual()
   const contas = useTodasContas()
   const [novo, setNovo] = useState<{ tipo?: TipoNovo } | null>(null)
   useTempoReal(Boolean(membro))
+  const arrastar = useArrastarMes()
 
   const abas = abasDoMembro(contas.data ?? [], membro?.id)
   // O + já sabe onde você está: dentro de uma aba começa nela; em Contas fixas, em "todo mês"
@@ -38,11 +41,14 @@ export function Layout() {
             </div>
           </header>
 
-          <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-[calc(7rem+env(safe-area-inset-bottom))]">
+          <main {...arrastar} className="mx-auto w-full max-w-3xl flex-1 px-4 py-5 pb-[calc(7rem+env(safe-area-inset-bottom))]">
             <Outlet />
           </main>
 
-          <BarraDeBaixo onNovo={() => setNovo({ tipo: emFixas ? 'fixa' : undefined })} />
+          <BarraDeBaixo
+            casa={abas.compartilhadas[0]}
+            onNovo={() => setNovo({ tipo: emFixas ? 'fixa' : undefined })}
+          />
 
           <NovoLancamento
             aberto={novo !== null}
@@ -57,10 +63,13 @@ export function Layout() {
   )
 }
 
-function BarraDeBaixo({ onNovo }: { onNovo: () => void }) {
+function BarraDeBaixo({ casa, onNovo }: { casa?: Conta; onNovo: () => void }) {
   const { pathname } = useLocation()
+  const paraCasa = casa ? `/conta/${casa.id}` : '/mais'
+  const emCasa = Boolean(casa) && pathname === paraCasa
   const emAnalises = pathname.startsWith('/graficos') || pathname.startsWith('/metas')
-  const emMais = ['/mais', '/fixas', '/configuracoes', '/conta/'].some((p) => pathname.startsWith(p))
+  const emMais =
+    !emCasa && ['/mais', '/transacoes', '/fixas', '/configuracoes', '/atalho', '/conta/'].some((p) => pathname.startsWith(p))
 
   return (
     <nav
@@ -69,7 +78,7 @@ function BarraDeBaixo({ onNovo }: { onNovo: () => void }) {
     >
       <div className="mx-auto grid h-16 max-w-3xl grid-cols-5 items-center px-2">
         <ItemBarra para="/" fim rotulo="Início" icone={<IconeCasa />} />
-        <ItemBarra para="/transacoes" rotulo="Transações" icone={<IconeLista />} />
+        <ItemBarra para={paraCasa} rotulo={casa?.nome ?? 'Casa'} icone={<IconeSofa />} ativo={emCasa} />
         <div className="flex justify-center">
           <button
             type="button"
@@ -114,7 +123,7 @@ function ItemBarra({
       <span aria-hidden className="size-6">
         {icone}
       </span>
-      {rotulo}
+      <span className="max-w-full truncate px-1">{rotulo}</span>
     </NavLink>
   )
 }
@@ -132,7 +141,8 @@ const svg = (d: ReactNode) => (
   </svg>
 )
 const IconeCasa = () => svg(<path d="M3 11 12 4l9 7v8a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z" />)
-const IconeLista = () => svg(<path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />)
+const IconeSofa = () =>
+  svg(<path d="M5 11V8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v3M3 13a2 2 0 0 1 4 0v2h10v-2a2 2 0 0 1 4 0v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1zM6 18v2M18 18v2" />)
 const IconeGrafico = () => svg(<path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />)
 const IconeMais = () =>
   svg(

@@ -2,15 +2,15 @@ import type { ReactNode } from 'react'
 import { Link } from 'react-router-dom'
 import { useCompetencia } from '../hooks/useCompetencia.tsx'
 import { useMembroAtual } from '../hooks/useDados.ts'
-import { competenciaAtual, diaDaSemanaDoInicio, diaDe, hoje, nomeCurtoDoMes, somarMeses } from '../lib/datas.ts'
+import { competenciaAtual, diaDe, hoje, nomeCurtoDoMes, somarMeses } from '../lib/datas.ts'
 import { acumulado, comparativoCategorias, gastoPorDia, ritmo } from '../lib/visaoGeral.ts'
 import { formatarCentavos } from '../lib/dinheiro.ts'
-import { GraficoLinhas, MapaDeCalor } from './graficos.tsx'
+import { GraficoLinhas } from './graficos.tsx'
 import type { Categoria, Lancamento } from '../types/banco.ts'
 
 /**
  * Análise do mês aberto no seletor: ritmo de gastos vs o mês passado,
- * mapa de calor dos dias e categorias vs o mês anterior (tela Análises).
+ * e categorias vs o mês anterior (tela Análises).
  */
 export function AnaliseDoMes({
   atual,
@@ -26,7 +26,6 @@ export function AnaliseDoMes({
   return (
     <>
       <RitmoDoMes atual={atual} anterior={anterior} categorias={categorias} nome={nome} />
-      <CartaoMapaDeCalor lancamentos={atual} />
       <PrincipaisCategorias atual={atual} anterior={anterior} categorias={categorias} />
     </>
   )
@@ -182,38 +181,6 @@ function MiniNumero({
         {detalhe && <span className="ml-1.5 text-sm font-normal text-stone-500">{detalhe}</span>}
       </p>
     </div>
-  )
-}
-
-function CartaoMapaDeCalor({ lancamentos }: { lancamentos: Lancamento[] }) {
-  const { competencia } = useCompetencia()
-  const porDia = gastoPorDia(lancamentos, competencia)
-  const total = porDia.reduce((s, v) => s + v, 0)
-  const ehMesAtual = competencia === competenciaAtual()
-  const diasPassados = ehMesAtual ? diaDe(hoje()) : porDia.length
-  const maior = porDia.reduce((m, v, i) => (v > porDia[m] ? i : m), 0)
-
-  return (
-    <Painel titulo="Mapa de calor">
-      <p className="text-2xl font-semibold tracking-tight">{formatarCentavos(total)}</p>
-      <p className="mb-3 text-xs text-stone-500">
-        Média por dia:{' '}
-        <span className="font-semibold text-stone-900">
-          {formatarCentavos(Math.round(total / Math.max(1, diasPassados)))}
-        </span>
-        {porDia[maior] > 0 && (
-          <>
-            {' · '}maior gasto no dia {maior + 1} ({formatarCentavos(porDia[maior])})
-          </>
-        )}
-      </p>
-      <MapaDeCalor
-        titulo="Gasto de cada dia do mês"
-        valores={porDia}
-        inicioSemana={diaDaSemanaDoInicio(competencia)}
-        diaDestaque={ehMesAtual ? diaDe(hoje()) : undefined}
-      />
-    </Painel>
   )
 }
 

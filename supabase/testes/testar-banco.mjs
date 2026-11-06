@@ -391,6 +391,41 @@ await q(`update recorrentes set fim = null where id = $1`, [contrato])
 await q(`select gerar_periodo('2029-01-01', '2029-06-01')`)
 ok((await mesesDe(contrato)) === 6, 'tirando o limite, volta a aparecer nos meses seguintes')
 
+// Gasto rápido pelo atalho do iPhone (sem login, só com o código secreto)
+console.log('\n— Gasto rápido —')
+await como('authenticated', 'lucascoelho855@gmail.com')
+const token = (await q(`select gerar_token_atalho() t`))[0].t
+ok(/^[0-9a-f]{64}$/.test(token), 'gera um código secreto de 64 caracteres')
+ok((await q(`select count(*)::int n from atalhos where token_hash = $1`, [token]))[0].n === 0, 'no banco fica só o hash, não o código')
+ok((await q(`select valor_em_centavos('12,50') a, valor_em_centavos('12.5') b, valor_em_centavos('R$ 1.234,56') c, valor_em_centavos('1.500') d, valor_em_centavos('abc') e`))
+  .map((r) => [r.a, r.b, r.c, r.d, r.e].join())[0] === '1250,1250,123456,150000,', 'entende o valor de vários jeitos')
+
+await como('anon', null)
+const msg1 = (await q(`select lancar_rapido($1, '23,90', 'Padaria') m`, [token]))[0].m
+ok(msg1 === 'R$ 23,90 em Mercado: Padaria', `lança na aba do Lucas e adivinha a categoria → ${msg1}`)
+const msg2 = (await q(`select lancar_rapido($1, '120', 'iFood', 'Casa') m`, [token]))[0].m
+ok(msg2.includes('dividido'), `"casa" divide entre os dois → ${msg2}`)
+await q(`select lancar_rapido($1, '10,01', 'Uber', 'casa', 'lazer')`, [token])
+await deveFalhar(`select lancar_rapido('${token}', '10', 'Teste', 'Aba que não existe')`, 'aba desconhecida é recusada')
+await deveFalhar(`select lancar_rapido('codigo-errado', '10', 'Teste')`, 'código errado é recusado')
+await deveFalhar(`select lancar_rapido('${token}', '0', 'Teste')`, 'valor zero é recusado')
+await deveFalhar(`select count(*) from atalhos`, 'visitante sem login não lê os códigos')
+await deveFalhar(`select gerar_token_atalho()`, 'visitante sem login não gera código')
+
+await como('authenticated', 'lucascoelho855@gmail.com')
+const padaria = (await q(`select l.*, c.nome cat, k.nome conta from lancamentos l left join categorias c on c.id = l.categoria_id join contas k on k.id = l.conta_id where descricao = 'Padaria'`))[0]
+ok(padaria.conta === 'Lucas' && padaria.pago && padaria.valor_centavos === 2390 && padaria.membro_id === lucas, 'gasto pessoal: na aba do Lucas, já pago')
+const ifood = await q(`select membro_id, valor_centavos, pago, conta_id, grupo_id from lancamentos where descricao = 'iFood' order by valor_centavos`)
+ok(ifood.length === 2 && ifood.every((l) => l.conta_id === idCasa && l.valor_centavos === 6000) && ifood[0].grupo_id === ifood[1].grupo_id, 'na Casa: R$ 60 para cada, no mesmo grupo')
+ok(ifood.find((l) => l.membro_id === lucas).pago && !ifood.find((l) => l.membro_id === emillia).pago, 'a parte de quem lançou já pago; a do outro a pagar')
+const uber = await q(`select membro_id, valor_centavos, c.nome cat from lancamentos l join categorias c on c.id = l.categoria_id where descricao = 'Uber'`)
+ok(uber.find((l) => l.membro_id === lucas).valor_centavos === 501 && uber.find((l) => l.membro_id === emillia).valor_centavos === 500, 'centavo que sobra fica com quem lançou')
+ok(uber.every((l) => l.cat === 'Lazer'), 'categoria escolhida no atalho vale mais que o palpite')
+const novoToken = (await q(`select gerar_token_atalho() t`))[0].t
+await como('anon', null)
+await deveFalhar(`select lancar_rapido('${token}', '5', 'Velho')`, 'gerar outro código desliga o antigo')
+ok((await q(`select lancar_rapido($1, '5', 'Novo') m`, [novoToken])).length === 1, 'o código novo funciona')
+
 await db.exec('reset role')
 console.log(falhas === 0 ? '\nTudo certo.' : `\n${falhas} falha(s).`)
 process.exit(falhas === 0 ? 0 : 1)

@@ -11,7 +11,7 @@ import { formatarData, nomeCurtoDoMes, nomeDaCompetencia, somarMeses } from '../
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
 import { CheckPago } from '../components/lancamentos.tsx'
 import { classeInput } from '../components/campos.tsx'
-import { BarraFiltros, EscolhaFiltro, type FiltroAtivo } from '../components/Filtros.tsx'
+import { Filtro, LinhaFiltros } from '../components/Filtros.tsx'
 import { usePessoa } from '../hooks/usePessoa.tsx'
 import type { Conta, Lancamento } from '../types/banco.ts'
 
@@ -28,10 +28,10 @@ const FILTRO_INICIAL: FiltroTransacoes = {
 }
 
 const PERIODOS = [
-  { valor: '1', texto: 'Mês do seletor' },
-  { valor: '3', texto: 'Últimos 3 meses' },
-  { valor: '6', texto: 'Últimos 6 meses' },
-  { valor: '12', texto: 'Últimos 12 meses' },
+  { valor: '1', texto: 'Este mês' },
+  { valor: '3', texto: '3 meses' },
+  { valor: '6', texto: '6 meses' },
+  { valor: '12', texto: '12 meses' },
 ]
 const ORDENS = [
   { valor: 'recentes', texto: 'Mais recentes' },
@@ -40,12 +40,12 @@ const ORDENS = [
   { valor: 'menor', texto: 'Menor valor' },
 ]
 const TIPOS: { valor: FiltroTransacoes['tipo']; texto: string }[] = [
-  { valor: 'todos', texto: 'Gastos e entradas' },
+  { valor: 'todos', texto: 'Todos' },
   { valor: 'saida', texto: 'Só gastos' },
   { valor: 'entrada', texto: 'Só entradas' },
 ]
 const SITUACOES: { valor: FiltroTransacoes['status']; texto: string }[] = [
-  { valor: 'todos', texto: 'Pagos e pendentes' },
+  { valor: 'todos', texto: 'Todas' },
   { valor: 'pago', texto: 'Só pagos' },
   { valor: 'pendente', texto: 'Só pendentes' },
 ]
@@ -82,34 +82,13 @@ export default function Transacoes() {
     setMeses(1)
     setPessoa('todos')
   }
-  const texto = <T extends string>(opcoes: { valor: T; texto: string }[], v: T) => opcoes.find((o) => o.valor === v)?.texto ?? ''
-  const ativos: FiltroAtivo[] = [
-    meses !== 1 && { chave: 'periodo', texto: texto(PERIODOS, String(meses)), onRemover: () => setMeses(1) },
-    pessoa !== 'todos' && {
-      chave: 'pessoa',
-      texto: listaMembros.find((m) => m.id === pessoa)?.nome ?? 'Pessoa',
-      onRemover: () => setPessoa('todos'),
-    },
-    filtro.contaId && {
-      chave: 'conta',
-      texto: listaContas.find((c) => c.id === filtro.contaId)?.nome ?? 'Conta',
-      onRemover: () => mudar({ contaId: null }),
-    },
-    filtro.tipo !== 'todos' && { chave: 'tipo', texto: texto(TIPOS, filtro.tipo), onRemover: () => mudar({ tipo: 'todos' }) },
-    filtro.status !== 'todos' && {
-      chave: 'status',
-      texto: texto(SITUACOES, filtro.status),
-      onRemover: () => mudar({ status: 'todos' }),
-    },
-    filtro.categoriaId && {
-      chave: 'categoria',
-      texto:
-        filtro.categoriaId === 'sem'
-          ? 'Sem categoria'
-          : (listaCategorias.find((c) => c.id === filtro.categoriaId)?.nome ?? 'Categoria'),
-      onRemover: () => mudar({ categoriaId: null }),
-    },
-  ].filter((f): f is FiltroAtivo => Boolean(f))
+  const mudou =
+    meses !== 1 ||
+    pessoa !== 'todos' ||
+    filtro.contaId !== null ||
+    filtro.tipo !== 'todos' ||
+    filtro.status !== 'todos' ||
+    filtro.categoriaId !== null
 
   return (
     <div className="flex flex-col gap-4 pb-20">
@@ -124,67 +103,48 @@ export default function Transacoes() {
         </p>
       </div>
 
-      <BarraFiltros
-        ativos={ativos}
-        onLimpar={limparTudo}
-        ordenar={{
-          valor: filtro.ordem,
-          onChange: (v) => mudar({ ordem: v as FiltroTransacoes['ordem'] }),
-          opcoes: ORDENS,
-        }}
-        painel={
-          <>
-            <EscolhaFiltro
-              rotulo="Período"
-              valor={String(meses)}
-              onChange={(v) => setMeses(Number(v))}
-              opcoes={PERIODOS}
-            />
-            <EscolhaFiltro
-              rotulo="Pessoa"
-              valor={pessoa}
-              onChange={(v) => {
-                setPessoa(v)
-                setMostrando(POR_PAGINA)
-              }}
-              opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...listaMembros.map((m) => ({ valor: m.id, texto: m.nome }))]}
-            />
-            <EscolhaFiltro
-              rotulo="Conta"
-              valor={filtro.contaId ?? ''}
-              onChange={(v) => mudar({ contaId: v || null })}
-              opcoes={[
-                { valor: '', texto: 'Todas' },
-                ...listaContas.map((c) => ({ valor: c.id, texto: c.nome + (c.arquivada ? ' (arquivada)' : '') })),
-              ]}
-            />
-            <EscolhaFiltro
-              rotulo="Tipo"
-              valor={filtro.tipo}
-              onChange={(v) => mudar({ tipo: v })}
-              opcoes={TIPOS}
-            />
-            <EscolhaFiltro
-              rotulo="Situação"
-              valor={filtro.status}
-              onChange={(v) => mudar({ status: v })}
-              opcoes={SITUACOES}
-            />
-            <EscolhaFiltro
-              rotulo="Categoria"
-              valor={filtro.categoriaId ?? ''}
-              onChange={(v) => mudar({ categoriaId: v || null })}
-              opcoes={[
-                { valor: '', texto: 'Todas' },
-                { valor: 'sem', texto: 'Sem categoria' },
-                ...listaCategorias
-                  .filter((c) => !c.arquivada || c.id === filtro.categoriaId)
-                  .map((c) => ({ valor: c.id, texto: `${c.icone ? `${c.icone} ` : ''}${c.nome}` })),
-              ]}
-            />
-          </>
-        }
-      />
+      <LinhaFiltros mudou={mudou} onLimpar={limparTudo}>
+        <Filtro rotulo="Período" valor={String(meses)} onChange={(v) => setMeses(Number(v))} opcoes={PERIODOS} />
+        <Filtro
+          rotulo="Pessoa"
+          valor={pessoa}
+          onChange={(v) => {
+            setPessoa(v)
+            setMostrando(POR_PAGINA)
+          }}
+          padrao="todos"
+          opcoes={[{ valor: 'todos', texto: 'Os dois' }, ...listaMembros.map((m) => ({ valor: m.id, texto: m.nome }))]}
+        />
+        <Filtro
+          rotulo="Conta"
+          valor={filtro.contaId ?? ''}
+          onChange={(v) => mudar({ contaId: v || null })}
+          opcoes={[
+            { valor: '', texto: 'Todas' },
+            ...listaContas.map((c) => ({ valor: c.id, texto: c.nome + (c.arquivada ? ' (arquivada)' : '') })),
+          ]}
+        />
+        <Filtro rotulo="Tipo" valor={filtro.tipo} onChange={(v) => mudar({ tipo: v })} opcoes={TIPOS} />
+        <Filtro rotulo="Situação" valor={filtro.status} onChange={(v) => mudar({ status: v })} opcoes={SITUACOES} />
+        <Filtro
+          rotulo="Categoria"
+          valor={filtro.categoriaId ?? ''}
+          onChange={(v) => mudar({ categoriaId: v || null })}
+          opcoes={[
+            { valor: '', texto: 'Todas' },
+            { valor: 'sem', texto: 'Sem categoria' },
+            ...listaCategorias
+              .filter((c) => !c.arquivada || c.id === filtro.categoriaId)
+              .map((c) => ({ valor: c.id, texto: `${c.icone ? `${c.icone} ` : ''}${c.nome}` })),
+          ]}
+        />
+        <Filtro
+          rotulo="Ordem"
+          valor={filtro.ordem}
+          onChange={(v) => mudar({ ordem: v as FiltroTransacoes['ordem'] })}
+          opcoes={ORDENS}
+        />
+      </LinhaFiltros>
 
       <div className="grid grid-cols-2 gap-2">
         <Numero rotulo="Transações" valor={String(filtradas.length)} icone="#" />

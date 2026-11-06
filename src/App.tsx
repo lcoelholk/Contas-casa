@@ -14,6 +14,7 @@ import Metas from './pages/Metas.tsx'
 import Transacoes from './pages/Transacoes.tsx'
 import Fixas from './pages/Fixas.tsx'
 import Mais from './pages/Mais.tsx'
+import Atalho from './pages/Atalho.tsx'
 
 export default function App() {
   // Sem .env.local preenchido, mostra só a tela de configuração
@@ -39,6 +40,7 @@ export default function App() {
             <Route path="transacoes" element={<Transacoes />} />
             <Route path="fixas" element={<Fixas />} />
             <Route path="mais" element={<Mais />} />
+            <Route path="atalho" element={<Atalho />} />
           </Route>
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
