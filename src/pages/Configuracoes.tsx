@@ -37,8 +37,8 @@ export default function Configuracoes() {
 
 function Bloco({ titulo, children, acao }: { titulo: string; children: ReactNode; acao?: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-stone-200 bg-superficie px-4 pt-4 pb-3 shadow-sm">
-      <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
+    <section className="rounded-2xl bg-superficie px-4 pt-4 pb-3">
+      <h2 className="text-sm font-semibold text-stone-500">{titulo}</h2>
       {children}
       {acao}
     </section>

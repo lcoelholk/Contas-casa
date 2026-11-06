@@ -4,7 +4,7 @@ import { useCompetencia } from '../hooks/useCompetencia.tsx'
 import { useMembroAtual, useMembros, useTodasContas } from '../hooks/useDados.ts'
 import { useAlternarPago, useCategorias, useLancamentos } from '../hooks/useLancamentos.ts'
 import { formatarCentavos, somar } from '../lib/dinheiro.ts'
-import { hoje, nomeDaCompetencia } from '../lib/datas.ts'
+import { hoje } from '../lib/datas.ts'
 import {
   agruparPorCompra,
   agruparPorGrupo,
@@ -13,12 +13,8 @@ import {
   ordenarLancamentos,
 } from '../lib/totais.ts'
 import { Aviso, Bolinha, Carregando } from '../components/ui.tsx'
-import {
-  ItemGrupo,
-  ItemLancamento,
-  PainelTotais,
-  PainelTotaisCompartilhada,
-} from '../components/lancamentos.tsx'
+import { ItemGrupo, ItemLancamento } from '../components/lancamentos.tsx'
+import { Destaque } from '../components/Destaque.tsx'
 import { FormLancamentoPessoal } from '../components/FormLancamentoPessoal.tsx'
 import { FormGastoCompartilhado } from '../components/FormGastoCompartilhado.tsx'
 import { FormRecorrente } from '../components/FormRecorrente.tsx'
@@ -83,19 +79,16 @@ function Cabecalho({
   contas: Conta[]
   membros: Membro[]
 }) {
-  const { competencia } = useCompetencia()
   const [editando, setEditando] = useState(false)
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <h1 className="flex items-center gap-2 text-lg font-semibold">
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
             <Bolinha cor={conta.cor} className="size-3" />
             {conta.nome}
           </h1>
-          <p className="text-sm text-stone-500">
-            {subtitulo} · <span className="lowercase">{nomeDaCompetencia(competencia)}</span>
-          </p>
+          <p className="text-sm text-stone-500">{subtitulo}</p>
         </div>
         <button
           type="button"
@@ -130,9 +123,9 @@ function Secao({
 }) {
   const temConteudo = Array.isArray(children) ? children.length > 0 : Boolean(children)
   return (
-    <section className="rounded-2xl border border-stone-200 bg-superficie px-4 pt-4 pb-1 shadow-sm">
+    <section className="rounded-2xl bg-superficie px-4 pt-4 pb-1">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
+        <h2 className="text-sm font-semibold text-stone-500">{titulo}</h2>
         {subtotal !== undefined && subtotal > 0 && (
           <span className="text-sm font-medium text-stone-500 tabular-nums">{formatarCentavos(subtotal)}</span>
         )}
@@ -143,13 +136,13 @@ function Secao({
         <p className="pt-3 pb-3 text-sm text-stone-500">{vazio}</p>
       )}
       {acoes && acoes.length > 0 && (
-        <div className="mb-3 flex gap-2">
+        <div className="-mx-2 mb-1 flex flex-wrap border-t border-stone-100 pt-1">
           {acoes.map((a) => (
             <button
               key={a.texto}
               type="button"
               onClick={a.onClick}
-              className="flex h-11 flex-1 items-center justify-center rounded-xl border border-dashed border-stone-300 text-sm font-semibold text-marca-700 hover:bg-marca-50"
+              className="flex min-h-11 items-center rounded-lg px-2 text-sm font-semibold text-marca-700 hover:bg-marca-50"
             >
               + {a.texto}
             </button>
@@ -294,7 +287,7 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
         membros={membros}
         subtitulo={ehPrincipal ? `Conta pessoal de ${dono.nome}` : `Outra conta de ${dono.nome}`}
       />
-      <PainelTotais totais={totais} />
+      <Destaque totais={totais} />
 
       <Secao
         titulo="Pessoal"
@@ -311,7 +304,7 @@ function PaginaPessoal({ conta, contas, membros, lancamentos, categorias, dono }
           // Entradas separadas dos gastos, no fim da seção
           ...(pessoais.some((l) => l.tipo === 'entrada')
             ? [
-                <li key="titulo-entradas" className="pt-3 pb-1 text-xs font-semibold tracking-wide text-stone-500 uppercase">
+                <li key="titulo-entradas" className="pt-3 pb-1 text-sm font-semibold text-stone-500">
                   Entradas
                 </li>,
                 ...pessoais.filter((l) => l.tipo === 'entrada').map((l) => item(l, conta)),
@@ -388,7 +381,16 @@ function PaginaCompartilhada({ conta, contas, membros, lancamentos, categorias }
         membros={membros}
         subtitulo={`Dividida entre ${membros.map((m) => m.nome).join(' e ')}`}
       />
-      <PainelTotaisCompartilhada total={totais.saidas} pendente={totais.pendente} porMembro={porMembro} />
+      <Destaque totais={totais} semSaldo>
+        <ul className="mt-3 flex flex-col gap-1 border-t border-white/20 pt-3 text-sm">
+          {porMembro.map(({ membro, valor }) => (
+            <li key={membro.id} className="flex items-center justify-between gap-2">
+              <span className="text-white/80">{membro.nome}</span>
+              <span className="font-semibold whitespace-nowrap tabular-nums">{formatarCentavos(valor)}</span>
+            </li>
+          ))}
+        </ul>
+      </Destaque>
 
       <Secao
         titulo="Contas fixas"

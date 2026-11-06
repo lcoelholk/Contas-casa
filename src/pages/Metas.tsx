@@ -66,8 +66,8 @@ function Bloco({
   acao?: { texto: string; onClick: () => void }
 }) {
   return (
-    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
-      <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
+    <section aria-label={titulo} className="rounded-2xl bg-superficie p-4">
+      <h2 className="text-sm font-semibold text-stone-500">{titulo}</h2>
       {subtitulo && <p className="mt-0.5 text-xs text-stone-500">{subtitulo}</p>}
       <div className="mt-3">{children}</div>
       {acao && (

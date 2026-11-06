@@ -41,9 +41,9 @@ export function Painel({
   children: ReactNode
 }) {
   return (
-    <section aria-label={titulo} className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
+    <section aria-label={titulo} className="rounded-2xl bg-superficie p-4">
       <div className="flex items-baseline justify-between gap-2">
-        <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">{titulo}</h2>
+        <h2 className="text-sm font-semibold text-stone-500">{titulo}</h2>
         {link && (
           <Link
             to={link.para}
@@ -103,8 +103,8 @@ function RitmoDoMes({
   const acumAnterior = acumulado(porDiaAnterior)
 
   return (
-    <section aria-label="Ritmo do mês" className="rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
-      <h2 className="text-sm font-semibold tracking-wide text-stone-500 uppercase">Ritmo do mês</h2>
+    <section aria-label="Ritmo do mês" className="rounded-2xl bg-superficie p-4">
+      <h2 className="text-sm font-semibold text-stone-500">Ritmo do mês</h2>
       <p className="mt-2 text-sm text-stone-700">
         {ehFuturo ? 'Este mês ainda não começou: aparecem só as contas fixas e parcelas já previstas.' : frase}
       </p>

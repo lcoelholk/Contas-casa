@@ -52,7 +52,7 @@ export function Filtro<T extends string>({
   // O <select> de verdade cobre a etiqueta inteira (invisível): qualquer toque abre a lista do celular
   return (
     <label
-      className={`relative flex min-h-11 max-w-full items-center gap-1.5 rounded-full border pr-8 pl-3.5 text-sm shadow-sm has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-marca-600 ${
+      className={`relative flex min-h-11 max-w-full items-center gap-1.5 rounded-full border pr-8 pl-3.5 text-sm has-[select:focus-visible]:ring-2 has-[select:focus-visible]:ring-marca-600 ${
         ligado ? 'border-marca-600 bg-marca-50 text-marca-900' : 'border-stone-200 bg-superficie text-stone-700'
       }`}
     >

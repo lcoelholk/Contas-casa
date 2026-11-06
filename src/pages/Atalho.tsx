@@ -138,7 +138,7 @@ const classeBotaoSecundario =
 
 function Passo({ numero, titulo, children }: { numero: number; titulo: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border border-stone-200 bg-superficie p-4 shadow-sm">
+    <section className="flex flex-col gap-3 rounded-2xl bg-superficie p-4">
       <h2 className="flex items-center gap-2 font-semibold">
         <span
           aria-hidden
